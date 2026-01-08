@@ -1,0 +1,7 @@
+
+.header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.btn { padding: 10px 12px; border-radius: 8px; background: #111; color: #fff; text-decoration: none; }
+.empty { margin-top: 16px; color: #666; }
+.table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+.table th, .table td { border-bottom: 1px solid #eee; padding: 10px; text-align: left; }
+.actions button { padding: 6px 10px; }
