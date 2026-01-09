@@ -1,4 +1,6 @@
-import { Injectable, signal } from '@angular/core';
+// Caminho: src/app/core/services/auth.ts
+
+import { Injectable, signal, computed } from '@angular/core';
 
 export type Role = 'admin' | 'user';
 
@@ -19,27 +21,37 @@ export class AuthService {
 
   private _current = signal<SessionUser | null>(null);
 
+  // ✅ para o Layout usar (ex.: this.auth.currentUser())
+  readonly currentUser = computed(() => this._current());
+
+  // ✅ para Guard usar (ex.: this.auth.loggedIn())
+  readonly loggedIn = computed(() => !!this._current());
+
   constructor() {
     this.seedDefaultAdmin();
     this.restoreSession();
   }
 
-  // ✅ usado pelo Guard
+  // ✅ usado pelo Guard (se você já tem guard pronto chamando método)
   isLoggedIn(): boolean {
     return !!this._current();
   }
 
-  // ✅ usado pelo Layout/Menu (se quiser mostrar nome/role)
+  // ✅ usado pelo Layout/Menu (se você usa método)
   getCurrentUser(): SessionUser | null {
     return this._current();
   }
 
   login(username: string, password: string): boolean {
+    // ✅ importante: depois de limpar localStorage, garante o admin novamente
     this.seedDefaultAdmin();
+
+    const u = (username ?? '').trim();
+    const p = (password ?? '').trim();
 
     const users = this.readUsers();
     const found = users.find(
-      u => u.username.toLowerCase() === username.toLowerCase() && u.password === password
+      x => x.username.toLowerCase() === u.toLowerCase() && x.password === p
     );
 
     if (!found) return false;
@@ -80,6 +92,7 @@ export class AuthService {
     try {
       const raw = localStorage.getItem(this.sessionKey);
       if (!raw) return;
+
       const session = JSON.parse(raw);
       if (session?.id && session?.username) this._current.set(session);
     } catch {}
@@ -99,7 +112,9 @@ export class AuthService {
   }
 
   private newId(): string {
-    return (globalThis.crypto?.randomUUID?.() ??
-      `${Date.now()}-${Math.random().toString(16).slice(2)}`);
+    return (
+      globalThis.crypto?.randomUUID?.() ??
+      `${Date.now()}-${Math.random().toString(16).slice(2)}`
+    );
   }
 }
