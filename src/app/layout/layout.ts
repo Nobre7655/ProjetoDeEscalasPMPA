@@ -1,7 +1,9 @@
-import { Component, computed } from '@angular/core';
+// src/app/layout/layout.ts
 import { CommonModule } from '@angular/common';
+import { Component } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../core/services/auth';
+import { SessionUser } from '../core/services/auth';
 
 @Component({
   selector: 'app-layout',
@@ -10,54 +12,53 @@ import { AuthService } from '../core/services/auth';
   template: `
     <div class="shell">
       <aside class="sidebar">
-        <div class="brand">
-          <div class="badge">PMPA</div>
+        <!-- BRAND -->
+        <div class="brandCard">
+          <div class="brandLogo">
+            <img src="/assets/brasao-pmpa.png" alt="Brasão PMPA" />
+          </div>
           <div class="brandText">
-            <div class="title">Escalas</div>
-            <div class="sub">Sistema de Escalas</div>
+            <div class="brandTitle">Escalas</div>
+            <div class="brandSub">Sistema de Escalas</div>
           </div>
         </div>
 
-        <nav class="nav">
-          <a
-            routerLink="/calendario"
-            routerLinkActive="active"
-            [routerLinkActiveOptions]="{ exact: true }"
-            class="item"
-          >
+        <!-- MENU -->
+        <nav class="menu">
+          <a class="menuItem" routerLink="/painel" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">
             <span class="dot"></span>
-            Calendário
+            <span class="label">Painel Geral</span>
           </a>
 
-          <a
-            routerLink="/escalas"
-            routerLinkActive="active"
-            [routerLinkActiveOptions]="{ exact: true }"
-            class="item"
-          >
+          <a class="menuItem" routerLink="/calendario" routerLinkActive="active">
             <span class="dot"></span>
-            Escalas
+            <span class="label">Calendário</span>
+          </a>
+
+          <a class="menuItem" routerLink="/escalas" routerLinkActive="active">
+            <span class="dot"></span>
+            <span class="label">Escalas</span>
+          </a>
+
+          <a class="menuItem" routerLink="/relatorios" routerLinkActive="active">
+            <span class="dot"></span>
+            <span class="label">Relatórios</span>
           </a>
         </nav>
 
-        <div class="spacer"></div>
-
+        <!-- USER / FOOTER -->
         <div class="footer">
-          <div class="user">
-            <div class="avatar">{{ initials() }}</div>
+          <div class="userCard" *ngIf="user as u">
+            <div class="avatar">{{ (u.displayName || 'U').slice(0,1).toUpperCase() }}</div>
             <div class="userText">
-              <div class="userName">{{ displayName() }}</div>
-              <div class="userRole">{{ role() }}</div>
+              <div class="userName">{{ u.displayName }}</div>
+              <div class="userRole">{{ u.role.toUpperCase() }}</div>
             </div>
           </div>
 
-          <button class="logout" type="button" (click)="sair()">
-            Sair
-          </button>
-
-          <div class="ver">
-            <span class="status"></span>
-            v0.1
+          <button class="logout" type="button" (click)="sair()">Sair</button>
+          <div class="version">
+            <span class="dotOnline"></span> v0.1
           </div>
         </div>
       </aside>
@@ -68,202 +69,100 @@ import { AuthService } from '../core/services/auth';
     </div>
   `,
   styles: [`
-    .shell{
-      min-height: 100vh;
-      display: grid;
-      grid-template-columns: 280px 1fr;
-      background: #f6f7f9;
-      font-family: system-ui, Segoe UI, Roboto, Arial;
-    }
-
+    .shell{display:grid;grid-template-columns:320px 1fr;min-height:100vh;background:#f4f6fa;}
     .sidebar{
-      background: linear-gradient(180deg, #0f2f57 0%, #0b1f3a 100%);
-      padding: 18px 16px;
-      display: grid;
-      grid-template-rows: auto auto 1fr auto;
-      gap: 16px;
-      box-shadow: 6px 0 18px rgba(2,6,23,.18);
+      padding:18px;
+      background: radial-gradient(1200px 700px at 30% 0%, #2b4f78 0%, #0b1f3a 48%, #071a31 100%);
+      color:#fff;
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+      border-right:1px solid rgba(255,255,255,.08);
     }
-
-    .brand{
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px;
-      border-radius: 16px;
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.10);
+    .brandCard{
+      display:flex;gap:14px;align-items:center;
+      padding:14px;border-radius:18px;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow:0 18px 40px rgba(0,0,0,.22);
     }
-
-    .badge{
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      background: #d4af37;
-      color: #111;
-      display: grid;
-      place-items: center;
-      font-weight: 900;
-      letter-spacing: .5px;
-      flex: 0 0 auto;
+    .brandLogo{
+      width:62px;height:62px;border-radius:16px;
+      display:grid;place-items:center;
+      background:#fff;
+      overflow:hidden;
     }
+    .brandLogo img{width:56px;height:56px;object-fit:contain;}
+    .brandTitle{font-weight:900;font-size:22px;line-height:1;}
+    .brandSub{opacity:.85;margin-top:6px;font-weight:600;}
 
-    .brandText .title{
-      color: #fff;
-      font-weight: 900;
-      font-size: 16px;
-      line-height: 1.1;
+    .menu{display:grid;gap:14px;margin-top:6px;}
+    .menuItem{
+      display:flex;align-items:center;gap:12px;
+      padding:16px 16px;border-radius:18px;
+      text-decoration:none;color:#fff;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
+      transition:.18s ease;
+      font-weight:900;
+      font-size:22px;
     }
-    .brandText .sub{
-      color: rgba(255,255,255,.75);
-      font-weight: 600;
-      font-size: 12px;
-      margin-top: 2px;
+    .menuItem:hover{transform:translateY(-1px);background:rgba(255,255,255,.12);}
+    .menuItem .dot{
+      width:12px;height:12px;border-radius:999px;
+      background:rgba(255,255,255,.22);
+      box-shadow:0 0 0 6px rgba(255,255,255,.06);
     }
-
-    .nav{ display: grid; gap: 10px; }
-
-    .item{
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 12px;
-      border-radius: 14px;
-      color: rgba(255,255,255,.92);
-      text-decoration: none;
-      font-weight: 800;
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.08);
-      transition: .15s ease;
+    .menuItem.active{
+      outline:1px solid rgba(212,175,55,.55);
+      background:rgba(212,175,55,.10);
     }
+    .menuItem.active .dot{background:#d4af37;box-shadow:0 0 0 6px rgba(212,175,55,.14);}
 
-    .item:hover{
-      background: rgba(255,255,255,.10);
-      border-color: rgba(212,175,55,.35);
-      transform: translateY(-1px);
+    .footer{margin-top:auto;display:grid;gap:14px;}
+    .userCard{
+      display:flex;gap:14px;align-items:center;
+      padding:16px;border-radius:18px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.10);
     }
-
-    .dot{
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.35);
-      box-shadow: 0 0 0 4px rgba(255,255,255,.06);
-    }
-
-    .item.active{
-      background: rgba(255,255,255,.12);
-      border-color: rgba(212,175,55,.65);
-      box-shadow: 0 0 0 4px rgba(212,175,55,.10);
-    }
-    .item.active .dot{
-      background: #d4af37;
-      box-shadow: 0 0 0 4px rgba(212,175,55,.18);
-    }
-
-    .spacer{ height: 1px; }
-
-    .footer{
-      display: grid;
-      gap: 12px;
-      padding: 12px;
-      border-radius: 16px;
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.10);
-    }
-
-    .user{
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
     .avatar{
-      width: 38px;
-      height: 38px;
-      border-radius: 14px;
-      background: rgba(212,175,55,.18);
-      border: 1px solid rgba(212,175,55,.35);
-      color: #fff;
-      display: grid;
-      place-items: center;
-      font-weight: 900;
+      width:54px;height:54px;border-radius:16px;
+      background:#d4af37;color:#0b1f3a;
+      display:grid;place-items:center;
+      font-weight:1000;font-size:22px;
     }
-
-    .userName{
-      color: #fff;
-      font-weight: 900;
-      font-size: 13px;
-      line-height: 1.1;
-    }
-    .userRole{
-      color: rgba(255,255,255,.72);
-      font-weight: 700;
-      font-size: 12px;
-      margin-top: 2px;
-    }
-
+    .userName{font-weight:1000;font-size:22px;line-height:1.1;}
+    .userRole{opacity:.85;margin-top:4px;font-weight:900;letter-spacing:.04em;}
     .logout{
-      padding: 10px 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(254,205,211,.55);
-      background: rgba(255,241,242,.12);
-      color: #fff;
-      font-weight: 900;
-      cursor: pointer;
-      transition: .15s ease;
+      padding:16px;border-radius:18px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.06);
+      color:#fff;font-weight:1000;font-size:20px;
+      cursor:pointer;
     }
-    .logout:hover{
-      border-color: rgba(254,205,211,.85);
-      background: rgba(255,241,242,.18);
-      transform: translateY(-1px);
-    }
+    .logout:hover{background:rgba(255,255,255,.10);}
+    .version{opacity:.9;font-weight:900;display:flex;align-items:center;gap:10px;}
+    .dotOnline{width:12px;height:12px;border-radius:999px;background:#22c55e;box-shadow:0 0 0 5px rgba(34,197,94,.18);}
 
-    .ver{
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: rgba(255,255,255,.7);
-      font-weight: 700;
-      font-size: 12px;
-    }
-    .status{
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: #22c55e;
-    }
-
-    .content{
-      padding: 22px;
-    }
-
+    .content{padding:18px;}
     @media (max-width: 980px){
-      .shell{ grid-template-columns: 1fr; }
-      .sidebar{ position: sticky; top: 0; z-index: 10; }
-      .content{ padding: 14px; }
+      .shell{grid-template-columns:1fr;}
+      .sidebar{position:sticky;top:0;z-index:10;}
     }
-  `],
+  `]
 })
 export class LayoutComponent {
-  private user = computed(() => this.auth.getCurrentUser()
-);
-
   constructor(private auth: AuthService, private router: Router) {}
 
-  displayName = () => this.user()?.displayName ?? 'Usuário';
-  role = () => (this.user()?.role ?? 'user').toUpperCase();
-
-  initials(): string {
-    const name = (this.user()?.displayName ?? 'U').trim();
-    const parts = name.split(/\s+/).filter(Boolean);
-    const a = parts[0]?.[0] ?? 'U';
-    const b = parts.length > 1 ? parts[parts.length - 1][0] : '';
-    return (a + b).toUpperCase();
+  // ✅ getter evita "auth usado antes de inicializar"
+  get user(): SessionUser | null {
+    return this.auth.getCurrentUser();
   }
 
   sair() {
     this.auth.logout();
-    this.router.navigateByUrl('/auth/login');
+    this.router.navigate(['/login']);
   }
 }

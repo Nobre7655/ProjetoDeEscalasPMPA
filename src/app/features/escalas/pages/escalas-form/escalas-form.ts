@@ -1,150 +1,176 @@
-// src/app/features/escalas/pages/escalas-form/escalas-form.ts
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-
 import { EscalasService } from '../../../../core/services/escalas';
-import { Turno } from '../../../../core/models/escala.model';
+import { ExtraTipo, TipoEscala, Turno } from '../../../../core/models/escala.model';
 
 @Component({
   selector: 'app-escalas-form',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="page">
-      <div class="page-header">
-        <div>
-          <h2>Nova Escala</h2>
-          <p>Preencha os campos para cadastrar uma nova escala.</p>
+    <div class="wrap">
+      <div class="card">
+        <div class="head">
+          <div>
+            <h2>Nova escala</h2>
+            <p class="muted">Cadastre uma escala e volte para o calendário.</p>
+          </div>
+          <button class="btn" type="button" (click)="cancelar()">Voltar</button>
         </div>
-      </div>
 
-      <div class="card form-card">
-        <form class="form" (ngSubmit)="salvar()">
-          <div class="grid">
-            <label>
-              Data
-              <input type="date" [(ngModel)]="data" name="data" />
-            </label>
+        <div *ngIf="erro" class="errorBox">{{ erro }}</div>
 
-            <label>
-              Turno
-              <select [(ngModel)]="turno" name="turno">
-                <option *ngFor="let t of turnos" [value]="t">{{ t }}</option>
+        <div class="form">
+          <div class="row2">
+            <div class="field">
+              <label>Data</label>
+              <input type="date" [(ngModel)]="draft.data" />
+            </div>
+
+            <div class="field">
+              <label>Turno</label>
+              <select [(ngModel)]="draft.turno">
+                <option [ngValue]="'MANHÃ'">MANHÃ</option>
+                <option [ngValue]="'TARDE'">TARDE</option>
+                <option [ngValue]="'NOITE'">NOITE</option>
+                <option [ngValue]="'MADRUGADA'">MADRUGADA</option>
               </select>
-            </label>
+            </div>
           </div>
 
-          <label>
-            Local
-            <input placeholder="Ex: 10º BPM" [(ngModel)]="local" name="local" />
-          </label>
+          <div class="row2">
+            <div class="field">
+              <label>Tipo</label>
+              <select [(ngModel)]="draft.tipo">
+                <option [ngValue]="'PMF'">PMF</option>
+                <option [ngValue]="'ESCOLA_SEGURA'">Escola Segura</option>
+                <option [ngValue]="'EXTRA'">Extra</option>
+              </select>
+            </div>
 
-          <label>
-            Guarnição
-            <input placeholder="Ex: CB João, SD Maria" [(ngModel)]="guarnicao" name="guarnicao" />
-          </label>
+            <div class="field" *ngIf="draft.tipo === 'EXTRA'">
+              <label>Extra</label>
+              <select [(ngModel)]="draft.extraTipo">
+                <option [ngValue]="null">Selecione...</option>
+                <option [ngValue]="'REFORCO'">Reforço</option>
+                <option [ngValue]="'EVENTO'">Evento</option>
+                <option [ngValue]="'OPERACAO'">Operação</option>
+                <option [ngValue]="'OUTRO'">Outro</option>
+              </select>
+            </div>
+          </div>
 
-          <label>
-            Observação (opcional)
-            <textarea rows="3" [(ngModel)]="observacao" name="observacao"></textarea>
-          </label>
+          <div class="field">
+            <label>Guarnição</label>
+            <input type="text" placeholder="Ex: CB João, SD Maria" [(ngModel)]="draft.guarnicao" />
+          </div>
+
+          <div class="field">
+            <label>Observação (opcional)</label>
+            <textarea rows="3" [(ngModel)]="draft.observacao"></textarea>
+          </div>
 
           <div class="actions">
-            <button class="btn-primary" type="submit">Salvar</button>
+            <button class="btn" type="button" (click)="cancelar()">Cancelar</button>
+            <button class="btnPrimary" type="button" (click)="salvar()">Salvar</button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   `,
   styles: [`
-    :host{ display:block; }
-
-    .page{ display:grid; gap:14px; }
-    .page-header{ display:flex; align-items:flex-end; justify-content:space-between; gap:12px; }
-    .page-header p{ margin-top:6px; color:#64748b; }
-
-    .card{
-      background:#fff;
-      border:1px solid #e7e9ee;
-      border-radius: 14px;
-      box-shadow: 0 12px 34px rgba(2,6,23,.10);
-    }
-
-    .form-card{ padding: 18px; }
-    .form{ display:grid; gap: 14px; }
-
-    .grid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-
-    label{
-      display:grid;
-      gap: 8px;
-      font-weight: 700;
-      color: #0f172a;
-    }
-
-    input, select, textarea{
-      padding: 12px 12px;
-      border-radius: 12px;
-      border: 1px solid #e7e9ee;
-      background: #fff;
-      outline: none;
-      font-weight: 500;
-    }
-
-    input:focus, select:focus, textarea:focus{
-      border-color: rgba(15,47,87,.55);
-      box-shadow: 0 0 0 4px rgba(15,47,87,.10);
-    }
-
-    .actions{ display:flex; justify-content:flex-end; margin-top: 6px; }
-
-    .btn-primary{
-      padding: 12px 16px;
-      border-radius: 12px;
-      border: 0;
-      cursor: pointer;
-      font-weight: 800;
-      background: linear-gradient(180deg, #0f2f57, #0b1f3a);
-      color:#fff;
-    }
-
-    .btn-primary:hover{ filter: brightness(1.05); }
-
-    @media (max-width: 700px){
-      .grid{ grid-template-columns: 1fr; }
-      .actions{ justify-content: stretch; }
-      .btn-primary{ width: 100%; }
-    }
-  `],
+    .wrap{padding:18px;}
+    .card{background:#fff;border:1px solid #e7e9ee;border-radius:14px;box-shadow:0 12px 34px rgba(2,6,23,.10);padding:14px;max-width:900px;margin:0 auto;}
+    .head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;}
+    h2{margin:0;font-size:22px;}
+    .muted{color:#64748b;margin:6px 0 0;}
+    .form{display:grid;gap:12px;margin-top:10px;}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .field{display:grid;gap:6px;}
+    label{font-weight:900;color:#0f172a;font-size:13px;}
+    input, select, textarea{border:1px solid #e7e9ee;border-radius:12px;padding:12px;outline:none;font-weight:700;}
+    input:focus, select:focus, textarea:focus{border-color:rgba(15,47,87,.45);box-shadow:0 0 0 4px rgba(15,47,87,.08);}
+    .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:6px;}
+    .btn{padding:10px 12px;border-radius:12px;border:1px solid #e7e9ee;background:#fff;cursor:pointer;font-weight:900;}
+    .btnPrimary{padding:10px 12px;border-radius:12px;border:0;cursor:pointer;font-weight:900;color:#fff;background:linear-gradient(180deg,#0f2f57,#0b1f3a);}
+    .errorBox{padding:12px;border-radius:12px;border:1px solid #fecdd3;background:#fff1f2;color:#9f1239;font-weight:900;}
+    @media (max-width: 980px){.row2{grid-template-columns:1fr;}}
+  `]
 })
-export class EscalasFormComponent {
-  data = '';
-  turno: Turno = 'MANHÃ';
-  local = '';
-  guarnicao = '';
-  observacao = '';
+export class EscalasFormComponent implements OnInit {
+  erro = '';
 
-  turnos: Turno[] = ['MANHÃ', 'TARDE', 'NOITE', 'MADRUGADA'];
+  draft: {
+    data: string;
+    turno: Turno;
+    tipo: TipoEscala;
+    extraTipo: ExtraTipo | null;
+    guarnicao: string;
+    observacao: string;
+  } = {
+    data: this.toISO(new Date()),
+    turno: 'MANHÃ',
+    tipo: 'PMF',
+    extraTipo: null,
+    guarnicao: '',
+    observacao: '',
+  };
 
-  constructor(private escalasService: EscalasService, private router: Router) {}
+  constructor(
+    private escalasService: EscalasService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {}
 
-  salvar() {
-    if (!this.data || !this.local || !this.guarnicao) return;
+  ngOnInit(): void {
+    const qd = this.route.snapshot.queryParamMap.get('date');
+    if (qd && /^\d{4}-\d{2}-\d{2}$/.test(qd)) {
+      this.draft.data = qd;
+    }
+  }
 
+  salvar(): void {
+    this.erro = '';
+
+    const data = (this.draft.data || '').trim();
+    const turno = this.draft.turno;
+    const tipo = this.draft.tipo;
+    const extraTipo = this.draft.extraTipo;
+    const guarnicao = (this.draft.guarnicao || '').trim();
+    const observacao = (this.draft.observacao || '').trim();
+
+    if (!data || !turno || !tipo || !guarnicao) {
+      this.erro = 'Preencha Data, Turno, Tipo e Guarnição.';
+      return;
+    }
+    if (tipo === 'EXTRA' && !extraTipo) {
+      this.erro = 'Selecione o tipo de Extra.';
+      return;
+    }
+
+    // pode ser salvar() ou criar() (agora ambos existem)
     this.escalasService.criar({
-      data: this.data,
-      turno: this.turno,
-      local: this.local,
-      guarnicao: this.guarnicao,
-      observacao: this.observacao || undefined,
+      data,
+      turno,
+      tipo,
+      extraTipo: tipo === 'EXTRA' ? extraTipo : null,
+      guarnicao,
+      observacao: observacao ? observacao : undefined,
     });
 
-    this.router.navigateByUrl('/escalas');
+    this.router.navigate(['/escalas'], { queryParams: { date: data } });
+  }
+
+  cancelar(): void {
+    this.router.navigate(['/escalas'], { queryParams: { date: this.draft.data } });
+  }
+
+  private toISO(d: Date) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   }
 }

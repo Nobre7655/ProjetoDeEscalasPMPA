@@ -1,39 +1,39 @@
+// src/app/app.routes.ts
 import { Routes } from '@angular/router';
 
 import { LayoutComponent } from './layout/layout';
 import { LoginComponent } from './features/auth/login/login';
-import { EscalasListComponent } from './features/escalas/pages/escalas-list/escalas-list';
-import { EscalasFormComponent } from './features/escalas/pages/escalas-form/escalas-form';
-import { EscalasCalendarComponent } from './features/escalas/pages/escalas-calendar/escalas-calendar';
 import { NotFoundComponent } from './features/not-found/not-found';
+
+import { PainelGeralComponent } from './features/dashboard/pages/painel-geral/painel-geral';
+import { EscalasCalendarComponent } from './features/escalas/pages/escalas-calendar/escalas-calendar';
+import { EscalasListComponent } from './features/escalas/pages/escalas-list/escalas-list';
+
+import { RelatoriosComponent } from './features/relatorios/pages/relatorios/relatorios';
+import { RelatorioEditorComponent } from './features/relatorios/pages/relatorio-editor/relatorio-editor';
 
 import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
-  // ✅ entra primeiro no login
-  { path: '', redirectTo: 'auth/login', pathMatch: 'full' },
+  { path: 'login', component: LoginComponent },
 
-  // ✅ login
-  { path: 'auth/login', component: LoginComponent },
-
-  // ✅ tudo que precisa estar logado
   {
     path: '',
     component: LayoutComponent,
     canActivate: [authGuard],
     children: [
-      // ✅ calendário (nova home depois do login)
+      { path: '', pathMatch: 'full', redirectTo: 'painel' },
+
+      { path: 'painel', component: PainelGeralComponent },
       { path: 'calendario', component: EscalasCalendarComponent },
-
-      // ✅ páginas antigas
       { path: 'escalas', component: EscalasListComponent },
-      { path: 'escalas/nova', component: EscalasFormComponent },
 
-      // ✅ se acessar raiz logado, manda pro calendário
-      { path: '', redirectTo: 'calendario', pathMatch: 'full' },
+      { path: 'relatorios', component: RelatoriosComponent },
+      { path: 'relatorios/:id', component: RelatorioEditorComponent },
+
+      { path: '**', component: NotFoundComponent },
     ],
   },
 
-  // ✅ not found
-  { path: '**', component: NotFoundComponent },
+  { path: '**', redirectTo: 'login' },
 ];

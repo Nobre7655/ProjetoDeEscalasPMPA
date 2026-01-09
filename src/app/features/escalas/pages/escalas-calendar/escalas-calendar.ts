@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { EscalasService } from '../../../../core/services/escalas';
-import { Escala, Turno } from '../../../../core/models/escala.model';
+import { Escala, ExtraTipo, TipoEscala, Turno } from '../../../../core/models/escala.model';
 
 type Cell = { date?: string; day?: number; isToday?: boolean; count?: number };
 
@@ -31,6 +31,7 @@ type Cell = { date?: string; day?: number; isToday?: boolean; count?: number };
       </div>
 
       <div class="grid">
+        <!-- CALENDÁRIO -->
         <div class="card cal">
           <div class="weekdays">
             <div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div><div>Dom</div>
@@ -52,6 +53,7 @@ type Cell = { date?: string; day?: number; isToday?: boolean; count?: number };
           </div>
         </div>
 
+        <!-- LATERAL: ESCALAS DO DIA -->
         <div class="card side">
           <div class="sideHeader">
             <div>
@@ -61,18 +63,29 @@ type Cell = { date?: string; day?: number; isToday?: boolean; count?: number };
             <button class="btnPrimary small" (click)="openModal(selectedDate)">Adicionar</button>
           </div>
 
-          <div *ngIf="dayScales.length === 0" class="empty">
-            Nenhuma escala neste dia.
-          </div>
+          <div class="sideBody">
+            <ng-container *ngIf="dayScales.length > 0; else emptyTpl">
+              <div class="list">
+                <div *ngFor="let e of dayScales" class="item">
+                  <div class="itemMain">
+                    <strong>{{ e.turno }}</strong>
+                    <span class="muted">{{ labelTipo(e) }}</span>
+                    <span class="muted">{{ e.guarnicao }}</span>
+                    <span *ngIf="e.observacao" class="muted">Obs: {{ e.observacao }}</span>
+                  </div>
+                  <button class="danger" (click)="remover(e.id)">Remover</button>
+                </div>
+              </div>
+            </ng-container>
 
-          <div *ngFor="let e of dayScales" class="item">
-            <div class="itemMain">
-              <strong>{{ e.turno }}</strong>
-              <span class="muted">{{ e.local }}</span>
-              <span class="muted">{{ e.guarnicao }}</span>
-              <span *ngIf="e.observacao" class="muted">Obs: {{ e.observacao }}</span>
-            </div>
-            <button class="danger" (click)="remover(e.id)">Remover</button>
+            <ng-template #emptyTpl>
+              <div class="emptyState">
+                <div class="emptyIcon">📅</div>
+                <div class="emptyTitle">Nenhuma escala neste dia</div>
+                <div class="emptyText">Clique em “Adicionar” para criar a primeira escala do dia.</div>
+                <button class="btnPrimary small" (click)="openModal(selectedDate)">Criar primeira escala</button>
+              </div>
+            </ng-template>
           </div>
         </div>
       </div>
@@ -109,14 +122,36 @@ type Cell = { date?: string; day?: number; isToday?: boolean; count?: number };
             </div>
           </div>
 
-          <div class="field">
-            <label>Local</label>
-            <input type="text" placeholder="Ex: 10º BPM" [(ngModel)]="draft.local" [ngModelOptions]="{standalone:true}" />
+          <div class="row2">
+            <div class="field">
+              <label>Tipo</label>
+              <select [(ngModel)]="draft.tipo" [ngModelOptions]="{standalone:true}">
+                <option [ngValue]="'PMF'">PMF</option>
+                <option [ngValue]="'ESCOLA_SEGURA'">Escola Segura</option>
+                <option [ngValue]="'EXTRA'">Extra</option>
+              </select>
+            </div>
+
+            <div class="field" *ngIf="draft.tipo === 'EXTRA'">
+              <label>Extra</label>
+              <select [(ngModel)]="draft.extraTipo" [ngModelOptions]="{standalone:true}">
+                <option [ngValue]="null">Selecione...</option>
+                <option [ngValue]="'REFORCO'">Reforço</option>
+                <option [ngValue]="'EVENTO'">Evento</option>
+                <option [ngValue]="'OPERACAO'">Operação</option>
+                <option [ngValue]="'OUTRO'">Outro</option>
+              </select>
+            </div>
           </div>
 
           <div class="field">
             <label>Guarnição</label>
-            <input type="text" placeholder="Ex: CB João, SD Maria" [(ngModel)]="draft.guarnicao" [ngModelOptions]="{standalone:true}" />
+            <input
+              type="text"
+              placeholder="Ex: CB João, SD Maria"
+              [(ngModel)]="draft.guarnicao"
+              [ngModelOptions]="{standalone:true}"
+            />
           </div>
 
           <div class="field">
@@ -139,6 +174,7 @@ type Cell = { date?: string; day?: number; isToday?: boolean; count?: number };
     p{margin:6px 0 0;color:#64748b;}
     .controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
     .month{min-width:190px;text-align:center;font-weight:900;color:#0f172a;}
+
     .grid{display:grid;grid-template-columns: 1.3fr .9fr;gap:14px;}
     .card{background:#fff;border:1px solid #e7e9ee;border-radius:14px;box-shadow:0 12px 34px rgba(2,6,23,.10);padding:14px;}
     .cal{padding:12px;}
@@ -151,17 +187,35 @@ type Cell = { date?: string; day?: number; isToday?: boolean; count?: number };
     .cell.selected{border-color:rgba(15,47,87,.8);box-shadow:0 0 0 4px rgba(15,47,87,.12);}
     .day{font-weight:900;color:#0f172a;}
     .badge{position:absolute;right:10px;top:10px;background:#0b1f3a;color:#fff;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:900;}
-    .side{display:grid;gap:10px;}
+
+    .side{display:flex;flex-direction:column;min-height:0;}
     .sideHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;}
     h3{margin:0;font-size:16px;}
     .muted{color:#64748b;font-size:12px;}
+
+    .sideBody{flex:1;min-height:0;display:flex;}
+    .list{display:grid;gap:10px;width:100%;overflow:auto;padding-right:4px;}
+
     .item{border:1px solid #eef2f7;border-radius:12px;padding:12px;display:flex;justify-content:space-between;gap:10px;}
     .itemMain{display:grid;gap:4px;}
-    .empty{color:#64748b;padding:10px;}
+
+    .emptyState{
+      flex:1;
+      display:grid;
+      place-items:center;
+      text-align:center;
+      padding:22px;
+      color:#64748b;
+    }
+    .emptyIcon{font-size:28px;opacity:.9;margin-bottom:6px;}
+    .emptyTitle{font-weight:900;color:#0f172a;margin-top:2px;}
+    .emptyText{font-size:12px;margin:6px 0 12px;}
+
     .btn{padding:10px 12px;border-radius:12px;border:1px solid #e7e9ee;background:#fff;cursor:pointer;font-weight:900;}
     .btnPrimary{padding:10px 12px;border-radius:12px;border:0;cursor:pointer;font-weight:900;color:#fff;background:linear-gradient(180deg,#0f2f57,#0b1f3a);}
     .btnPrimary.small{padding:8px 10px;font-size:12px;}
     .danger{padding:8px 10px;border-radius:12px;border:1px solid #fecdd3;background:#fff1f2;color:#9f1239;font-weight:900;cursor:pointer;}
+
     .overlay{position:fixed;inset:0;background:rgba(2,6,23,.55);display:grid;place-items:center;padding:18px;z-index:999;}
     .modal{width:min(720px,100%);background:#fff;border-radius:16px;border:1px solid #e7e9ee;box-shadow:0 22px 60px rgba(2,6,23,.35);padding:14px;}
     .modalHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:4px 6px 10px;}
@@ -174,7 +228,11 @@ type Cell = { date?: string; day?: number; isToday?: boolean; count?: number };
     input:focus, select:focus, textarea:focus{border-color:rgba(15,47,87,.45);box-shadow:0 0 0 4px rgba(15,47,87,.08);}
     .actions{display:flex;justify-content:flex-end;gap:10px;padding:0 6px 6px;}
     .errorBox{margin:6px;padding:12px;border-radius:12px;border:1px solid #fecdd3;background:#fff1f2;color:#9f1239;font-weight:900;}
-    @media (max-width: 980px){.grid{grid-template-columns:1fr;}.row2{grid-template-columns:1fr;}}
+
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr;}
+      .row2{grid-template-columns:1fr;}
+    }
   `],
 })
 export class EscalasCalendarComponent implements OnInit {
@@ -188,11 +246,18 @@ export class EscalasCalendarComponent implements OnInit {
   modalOpen = false;
   formError = '';
 
-  // ✅ aqui é Turno, não string
-  draft: { data: string; turno: Turno; local: string; guarnicao: string; observacao: string } = {
+  draft: {
+    data: string;
+    turno: Turno;
+    tipo: TipoEscala;
+    extraTipo: ExtraTipo | null;
+    guarnicao: string;
+    observacao: string;
+  } = {
     data: this.selectedDate,
     turno: 'MANHÃ',
-    local: '',
+    tipo: 'PMF',
+    extraTipo: null,
     guarnicao: '',
     observacao: '',
   };
@@ -216,8 +281,15 @@ export class EscalasCalendarComponent implements OnInit {
     });
   }
 
-  prevMonth() { this.current = new Date(this.current.getFullYear(), this.current.getMonth() - 1, 1); this.build(); }
-  nextMonth() { this.current = new Date(this.current.getFullYear(), this.current.getMonth() + 1, 1); this.build(); }
+  prevMonth() {
+    this.current = new Date(this.current.getFullYear(), this.current.getMonth() - 1, 1);
+    this.build();
+  }
+
+  nextMonth() {
+    this.current = new Date(this.current.getFullYear(), this.current.getMonth() + 1, 1);
+    this.build();
+  }
 
   selectDate(date: string) {
     this.selectedDate = date;
@@ -233,7 +305,14 @@ export class EscalasCalendarComponent implements OnInit {
   openModal(date: string) {
     this.formError = '';
     this.modalOpen = true;
-    this.draft = { data: date, turno: 'MANHÃ', local: '', guarnicao: '', observacao: '' };
+    this.draft = {
+      data: date,
+      turno: 'MANHÃ',
+      tipo: 'PMF',
+      extraTipo: null,
+      guarnicao: '',
+      observacao: '',
+    };
   }
 
   closeModal() { this.modalOpen = false; }
@@ -242,20 +321,26 @@ export class EscalasCalendarComponent implements OnInit {
     this.formError = '';
 
     const data = (this.draft.data || '').trim();
-    const turno = this.draft.turno; // ✅ Turno
-    const local = (this.draft.local || '').trim();
+    const turno = this.draft.turno;
+    const tipo = this.draft.tipo;
+    const extraTipo = this.draft.extraTipo;
     const guarnicao = (this.draft.guarnicao || '').trim();
     const observacao = (this.draft.observacao || '').trim();
 
-    if (!data || !turno || !local || !guarnicao) {
-      this.formError = 'Preencha Data, Turno, Local e Guarnição.';
+    if (!data || !turno || !tipo || !guarnicao) {
+      this.formError = 'Preencha Data, Turno, Tipo e Guarnição.';
+      return;
+    }
+    if (tipo === 'EXTRA' && !extraTipo) {
+      this.formError = 'Selecione o tipo de Extra.';
       return;
     }
 
     this.escalas.salvar({
       data,
       turno,
-      local,
+      tipo,
+      extraTipo: tipo === 'EXTRA' ? extraTipo : null,
       guarnicao,
       observacao: observacao ? observacao : undefined,
     });
@@ -276,6 +361,23 @@ export class EscalasCalendarComponent implements OnInit {
     this.loadDay();
   }
 
+  labelTipo(e: Escala): string {
+    if (e.tipo === 'PMF') return 'PMF';
+    if (e.tipo === 'ESCOLA_SEGURA') return 'Escola Segura';
+    if (e.tipo === 'EXTRA') return `Extra${e.extraTipo ? ` • ${this.extraLabel(e.extraTipo)}` : ''}`;
+    return e.tipo;
+  }
+
+  private extraLabel(t: ExtraTipo): string {
+    switch (t) {
+      case 'REFORCO': return 'Reforço';
+      case 'EVENTO': return 'Evento';
+      case 'OPERACAO': return 'Operação';
+      case 'OUTRO': return 'Outro';
+      default: return t;
+    }
+  }
+
   private build() {
     const y = this.current.getFullYear();
     const m = this.current.getMonth();
@@ -285,7 +387,7 @@ export class EscalasCalendarComponent implements OnInit {
       .replace(/^\w/, c => c.toUpperCase());
 
     const all = this.escalas.listar();
-    const prefix = `${y}-${String(m + 1).padStart(2,'0')}-`;
+    const prefix = `${y}-${String(m + 1).padStart(2, '0')}-`;
 
     this.counts = new Map<string, number>();
     for (const e of all) {
@@ -302,7 +404,7 @@ export class EscalasCalendarComponent implements OnInit {
     const temp: Cell[] = Array.from({ length: 42 }, () => ({}));
     for (let i = 0; i < daysInMonth; i++) {
       const day = i + 1;
-      const dateISO = `${y}-${String(m + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      const dateISO = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       const idx = start + i;
 
       temp[idx] = {
@@ -312,6 +414,7 @@ export class EscalasCalendarComponent implements OnInit {
         count: this.counts.get(dateISO) ?? 0,
       };
     }
+
     this.cells = temp;
   }
 
@@ -321,13 +424,13 @@ export class EscalasCalendarComponent implements OnInit {
 
   private toISO(d: Date) {
     const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2,'0');
-    const day = String(d.getDate()).padStart(2,'0');
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
   }
 
   private mondayIndex(jsDay: number) {
-    // JS: Dom=0 ... Sáb=6  -> queremos Seg=0 ... Dom=6
+    // JS: Dom=0 ... Sáb=6 -> queremos Seg=0 ... Dom=6
     return (jsDay + 6) % 7;
   }
 }
