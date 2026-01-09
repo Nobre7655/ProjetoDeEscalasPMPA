@@ -1,8 +1,9 @@
 // src/app/core/services/escalas.ts
+
 import { Injectable } from '@angular/core';
 import { Anexo, Escala, ExtraTipo, TipoEscala, Turno } from '../models/escala.model';
 
-type NovaEscalaInput = {
+export type EscalaCreateDTO = {
   data: string;
   turno: Turno;
   tipo: TipoEscala;
@@ -12,61 +13,93 @@ type NovaEscalaInput = {
   createdBy?: string;
 };
 
+export type EscalaUpdatePatch = Partial<Pick<
+  Escala,
+  'data' | 'turno' | 'tipo' | 'extraTipo' | 'guarnicao' | 'observacao' | 'relatorio' | 'anexos'
+>>;
+
 @Injectable({ providedIn: 'root' })
 export class EscalasService {
-  private readonly key = 'pmpa_escalas_v1';
+  private readonly key = 'pmpa_escalas_v2';
 
-  listar(data?: string): Escala[] {
-    const all = this.read().sort((a, b) => (a.data < b.data ? 1 : -1));
-    return data ? all.filter(e => e.data === data) : all;
+  listar(date?: string): Escala[] {
+    const all = this.readAll();
+
+    const filtered = date
+      ? all.filter(e => e.data === date)
+      : all;
+
+    // ordena por data e turno
+    return filtered.sort((a, b) => {
+      if (a.data !== b.data) return a.data.localeCompare(b.data);
+      return a.turno.localeCompare(b.turno);
+    });
   }
 
   getById(id: string): Escala | null {
-    return this.read().find(e => e.id === id) ?? null;
+    const all = this.readAll();
+    return all.find(e => e.id === id) ?? null;
   }
 
-  // ✅ compatível com seu código atual (salvar)
-  salvar(input: NovaEscalaInput): Escala {
-    const all = this.read();
+  // ✅ compatibilidade (você tinha "salvar" em alguns lugares)
+  salvar(dto: EscalaCreateDTO): Escala {
+    return this.criar(dto);
+  }
+
+  // ✅ compatibilidade (você tinha "criar" em outros lugares)
+  criar(dto: EscalaCreateDTO): Escala {
+    const now = new Date().toISOString();
+
     const escala: Escala = {
       id: this.newId(),
-      data: input.data,
-      turno: input.turno,
-      tipo: input.tipo,
-      extraTipo: input.extraTipo ?? null,
-      guarnicao: input.guarnicao,
-      observacao: input.observacao,
-      relatorio: '',
+      data: dto.data,
+      turno: dto.turno,
+      tipo: dto.tipo,
+      extraTipo: dto.tipo === 'EXTRA' ? (dto.extraTipo ?? undefined) : undefined,
+      guarnicao: dto.guarnicao,
+      observacao: dto.observacao?.trim() ? dto.observacao.trim() : undefined,
+      relatorio: undefined,
       anexos: [],
-      createdAt: new Date().toISOString(),
-      createdBy: input.createdBy,
+      createdAt: now,
+      updatedAt: now,
+      createdBy: dto.createdBy,
     };
+
+    const all = this.readAll();
     all.push(escala);
-    this.write(all);
+    this.writeAll(all);
+
     return escala;
   }
 
-  // ✅ compatível com arquivos antigos que chamam "criar"
-  criar(input: NovaEscalaInput): Escala {
-    return this.salvar(input);
-  }
-
-  atualizar(id: string, patch: Partial<Escala>): Escala | null {
-    const all = this.read();
+  // ✅ resolve: "A propriedade atualizar não existe"
+  atualizar(id: string, patch: EscalaUpdatePatch): Escala | null {
+    const all = this.readAll();
     const idx = all.findIndex(e => e.id === id);
-    if (idx === -1) return null;
+    if (idx < 0) return null;
 
-    all[idx] = { ...all[idx], ...patch };
-    this.write(all);
-    return all[idx];
+    const current = all[idx];
+    const next: Escala = {
+      ...current,
+      ...patch,
+      extraTipo: (patch.tipo ?? current.tipo) === 'EXTRA'
+        ? (patch.extraTipo ?? current.extraTipo)
+        : undefined,
+      updatedAt: new Date().toISOString(),
+    };
+
+    all[idx] = next;
+    this.writeAll(all);
+    return next;
   }
 
   remover(id: string) {
-    const all = this.read().filter(e => e.id !== id);
-    this.write(all);
+    const all = this.readAll();
+    this.writeAll(all.filter(e => e.id !== id));
   }
 
-  private read(): Escala[] {
+  // helpers
+  private readAll(): Escala[] {
     try {
       const raw = localStorage.getItem(this.key);
       return raw ? (JSON.parse(raw) as Escala[]) : [];
@@ -75,8 +108,8 @@ export class EscalasService {
     }
   }
 
-  private write(data: Escala[]) {
-    localStorage.setItem(this.key, JSON.stringify(data));
+  private writeAll(all: Escala[]) {
+    localStorage.setItem(this.key, JSON.stringify(all));
   }
 
   private newId(): string {

@@ -1,6 +1,7 @@
 // src/app/features/relatorios/pages/relatorio-editor/relatorio-editor.ts
-import { CommonModule } from '@angular/common';
+
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { EscalasService } from '../../../../core/services/escalas';
@@ -16,90 +17,80 @@ import { Anexo, Escala } from '../../../../core/models/escala.model';
         <div>
           <h2>Relatório da Escala</h2>
           <p class="muted">
-            {{ escala.data }} • {{ escala.turno }} • {{ tipoLabel(escala) }}
+            <strong>{{ escala.data }}</strong> • {{ escala.turno }} • {{ labelTipo(escala) }}
           </p>
+          <p class="muted">Guarnição: {{ escala.guarnicao }}</p>
         </div>
 
         <div class="actionsTop">
           <button class="btn" (click)="voltar()">Voltar</button>
-          <button class="btnPrimary" (click)="salvar()">Salvar</button>
+          <button class="btnPrimary" (click)="salvar()">Salvar relatório</button>
         </div>
       </div>
 
+      <div *ngIf="msg" class="msg">{{ msg }}</div>
+
       <div class="grid">
         <div class="card">
-          <h3>Relatório</h3>
-          <textarea
-            rows="12"
-            [(ngModel)]="relatorio"
-            [ngModelOptions]="{standalone:true}"
-            placeholder="Descreva a ocorrência, medidas adotadas, resultados e observações..."
-          ></textarea>
-
-          <div class="hint">
-            Dica: escreva objetivo, resumo, ações, materiais usados e conclusão.
-          </div>
+          <h3>Texto do relatório</h3>
+          <textarea rows="14" [(ngModel)]="relatorio"></textarea>
+          <p class="hint">Dica: salve sempre que anexar arquivos ou concluir a redação.</p>
         </div>
 
         <div class="card">
           <h3>Anexos</h3>
 
-          <input class="file" type="file" multiple (change)="onFiles($event)" />
+          <input type="file" multiple (change)="onFiles($event)" />
 
-          <div class="list" *ngIf="anexos.length > 0; else empty">
-            <div class="anexo" *ngFor="let a of anexos; let i = index">
-              <div class="info">
-                <strong>{{ a.name }}</strong>
-                <span class="muted">{{ formatSize(a.size) }}</span>
-              </div>
-
-              <div class="btns">
-                <a class="btn" [href]="a.dataUrl" [attr.download]="a.name">Baixar</a>
-                <button class="danger" (click)="removerAnexo(i)">Remover</button>
-              </div>
-            </div>
+          <div *ngIf="anexos.length === 0" class="empty">
+            Nenhum anexo adicionado.
           </div>
 
-          <ng-template #empty>
-            <div class="muted">Nenhum anexo adicionado.</div>
-          </ng-template>
+          <div *ngFor="let a of anexos" class="fileRow">
+            <div class="fileInfo">
+              <strong>{{ a.name }}</strong>
+              <span class="muted">{{ formatBytes(a.size) }}</span>
+            </div>
+
+            <div class="fileBtns">
+              <a class="btnMini" [href]="a.dataUrl" [download]="a.name">Baixar</a>
+              <button class="danger" (click)="removerAnexo(a.id)">Remover</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
     <ng-template #notFound>
       <div class="card">
-        <h2>Escala não encontrada</h2>
-        <p class="muted">Volte para Relatórios e selecione uma escala válida.</p>
-        <button class="btn" (click)="router.navigate(['/relatorios'])">Voltar</button>
+        <h2>Relatório</h2>
+        <p class="muted">Escala não encontrada.</p>
+        <button class="btnPrimary" (click)="router.navigate(['/escalas'])">Voltar</button>
       </div>
     </ng-template>
   `,
   styles: [`
     .page{display:grid;gap:14px;}
-    .top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;}
-    h2{margin:0;font-size:22px;}
-    h3{margin:0 0 10px;font-size:16px;}
-    .muted{color:#64748b;}
-    .actionsTop{display:flex;gap:10px;flex-wrap:wrap;}
+    .top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+    h2{margin:0;font-size:20px;font-weight:900;}
+    h3{margin:0 0 10px;font-size:14px;font-weight:900;}
+    .muted{color:#64748b;margin:6px 0 0;}
+    .actionsTop{display:flex;gap:10px;}
     .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:14px;}
     .card{background:#fff;border:1px solid #e7e9ee;border-radius:14px;box-shadow:0 12px 34px rgba(2,6,23,.10);padding:14px;}
-    textarea{
-      width:100%;
-      border:1px solid #e7e9ee;border-radius:12px;padding:12px;
-      outline:none;font-weight:700;resize:vertical;
-      min-height:260px;
-    }
+    textarea{width:100%;border:1px solid #e7e9ee;border-radius:12px;padding:12px;font-weight:700;outline:none;}
     textarea:focus{border-color:rgba(15,47,87,.45);box-shadow:0 0 0 4px rgba(15,47,87,.08);}
-    .hint{margin-top:10px;color:#64748b;font-size:12px;}
-    .file{width:100%;padding:12px;border:1px dashed #cbd5e1;border-radius:12px;background:#f8fafc;}
-    .list{display:grid;gap:10px;margin-top:12px;}
-    .anexo{border:1px solid #eef2f7;border-radius:12px;padding:12px;display:flex;justify-content:space-between;gap:10px;align-items:center;}
-    .info{display:grid;gap:4px;}
-    .btns{display:flex;gap:10px;flex-wrap:wrap;}
-    .btn{padding:10px 12px;border-radius:12px;border:1px solid #e7e9ee;background:#fff;cursor:pointer;font-weight:900;text-decoration:none;color:#0f172a;}
+    input[type="file"]{margin:10px 0 12px;}
+    .hint{color:#64748b;font-size:12px;margin:10px 0 0;}
+    .empty{color:#64748b;padding:10px;border:1px dashed #e7e9ee;border-radius:12px;}
+    .fileRow{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid #eef2f7;border-radius:12px;padding:10px;margin-top:10px;}
+    .fileInfo{display:grid;gap:4px;}
+    .fileBtns{display:flex;gap:8px;}
+    .msg{padding:12px;border-radius:12px;border:1px solid #bbf7d0;background:#f0fdf4;color:#166534;font-weight:900;}
+    .btn{padding:10px 12px;border-radius:12px;border:1px solid #e7e9ee;background:#fff;cursor:pointer;font-weight:900;}
     .btnPrimary{padding:10px 12px;border-radius:12px;border:0;cursor:pointer;font-weight:900;color:#fff;background:linear-gradient(180deg,#0f2f57,#0b1f3a);}
-    .danger{padding:10px 12px;border-radius:12px;border:1px solid #fecdd3;background:#fff1f2;color:#9f1239;font-weight:900;cursor:pointer;}
+    .btnMini{padding:8px 10px;border-radius:12px;border:1px solid #e7e9ee;background:#fff;cursor:pointer;font-weight:900;font-size:12px;text-decoration:none;display:inline-flex;align-items:center;}
+    .danger{padding:8px 10px;border-radius:12px;border:1px solid #fecdd3;background:#fff1f2;color:#9f1239;font-weight:900;cursor:pointer;font-size:12px;}
     @media (max-width: 980px){.grid{grid-template-columns:1fr;}}
   `]
 })
@@ -107,91 +98,85 @@ export class RelatorioEditorComponent implements OnInit {
   escala: Escala | null = null;
   relatorio = '';
   anexos: Anexo[] = [];
+  msg = '';
 
   constructor(
     private route: ActivatedRoute,
     public router: Router,
-    private escalasService: EscalasService
+    private escalas: EscalasService
   ) {}
 
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id') || '';
-    const e = this.escalasService.getById(id);
+    const id = this.route.snapshot.paramMap.get('id');
+    if (!id) return;
 
-    if (!e) {
-      this.escala = null;
-      return;
+    const found = this.escalas.getById(id);
+    this.escala = found;
+
+    if (found) {
+      this.relatorio = found.relatorio ?? '';
+      this.anexos = found.anexos ?? [];
     }
-
-    this.escala = e;
-    this.relatorio = e.relatorio ?? '';
-    this.anexos = Array.isArray(e.anexos) ? [...e.anexos] : [];
   }
 
   voltar() {
-    this.router.navigate(['/relatorios']);
+    this.router.navigate(['/escalas/calendario'], { queryParams: { date: this.escala?.data } });
   }
 
   salvar() {
     if (!this.escala) return;
 
-    this.escalasService.atualizar(this.escala.id, {
-      relatorio: this.relatorio,
-      anexos: this.anexos
+    this.escalas.atualizar(this.escala.id, {
+      relatorio: (this.relatorio || '').trim(),
+      anexos: this.anexos,
     });
 
-    // recarrega para garantir consistência
-    const updated = this.escalasService.getById(this.escala.id);
-    if (updated) this.escala = updated;
-
-    this.router.navigate(['/relatorios']);
+    this.msg = 'Relatório salvo com sucesso.';
+    setTimeout(() => (this.msg = ''), 2500);
   }
 
-  async onFiles(ev: Event) {
+  onFiles(ev: Event) {
     const input = ev.target as HTMLInputElement;
-    const files = input.files ? Array.from(input.files) : [];
+    const files = Array.from(input.files ?? []);
+    if (files.length === 0) return;
+
+    // limpa o input pra permitir anexar o mesmo arquivo novamente
+    input.value = '';
 
     for (const f of files) {
-      const dataUrl = await this.fileToDataUrl(f);
-      this.anexos.push({
-        id: this.newId(),
-        name: f.name,
-        type: f.type || 'application/octet-stream',
-        size: f.size,
-        dataUrl,
-        createdAt: new Date().toISOString()
-      });
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = String(reader.result || '');
+        const anexo: Anexo = {
+          id: this.newId(),
+          name: f.name,
+          mime: f.type || 'application/octet-stream',
+          size: f.size,
+          dataUrl,
+          createdAt: new Date().toISOString(),
+        };
+        this.anexos = [anexo, ...this.anexos];
+      };
+      reader.readAsDataURL(f);
     }
-
-    // limpa o input (permite anexar o mesmo arquivo novamente se quiser)
-    input.value = '';
   }
 
-  removerAnexo(index: number) {
-    this.anexos.splice(index, 1);
+  removerAnexo(id: string) {
+    this.anexos = this.anexos.filter(a => a.id !== id);
   }
 
-  tipoLabel(e: Escala) {
-    if (e.tipo === 'EXTRA') return `Extra • ${e.extraTipo ?? '-'}`;
+  labelTipo(e: Escala) {
+    if (e.tipo === 'PMF') return 'PMF';
     if (e.tipo === 'ESCOLA_SEGURA') return 'Escola Segura';
-    return 'PMF';
+    return `Extra • ${e.extraTipo ?? '—'}`;
   }
 
-  formatSize(bytes: number) {
+  formatBytes(bytes: number) {
     if (bytes < 1024) return `${bytes} B`;
     const kb = bytes / 1024;
     if (kb < 1024) return `${kb.toFixed(1)} KB`;
     const mb = kb / 1024;
     return `${mb.toFixed(1)} MB`;
-  }
-
-  private fileToDataUrl(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result || ''));
-      reader.onerror = () => reject();
-      reader.readAsDataURL(file);
-    });
   }
 
   private newId(): string {

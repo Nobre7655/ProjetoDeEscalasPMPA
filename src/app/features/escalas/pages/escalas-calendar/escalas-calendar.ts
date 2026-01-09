@@ -1,3 +1,5 @@
+// src/app/features/escalas/pages/escalas-calendar/escalas-calendar.ts
+
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -31,7 +33,6 @@ type Cell = { date?: string; day?: number; isToday?: boolean; count?: number };
       </div>
 
       <div class="grid">
-        <!-- CALENDÁRIO -->
         <div class="card cal">
           <div class="weekdays">
             <div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div><div>Dom</div>
@@ -53,7 +54,6 @@ type Cell = { date?: string; day?: number; isToday?: boolean; count?: number };
           </div>
         </div>
 
-        <!-- LATERAL: ESCALAS DO DIA -->
         <div class="card side">
           <div class="sideHeader">
             <div>
@@ -63,29 +63,22 @@ type Cell = { date?: string; day?: number; isToday?: boolean; count?: number };
             <button class="btnPrimary small" (click)="openModal(selectedDate)">Adicionar</button>
           </div>
 
-          <div class="sideBody">
-            <ng-container *ngIf="dayScales.length > 0; else emptyTpl">
-              <div class="list">
-                <div *ngFor="let e of dayScales" class="item">
-                  <div class="itemMain">
-                    <strong>{{ e.turno }}</strong>
-                    <span class="muted">{{ labelTipo(e) }}</span>
-                    <span class="muted">{{ e.guarnicao }}</span>
-                    <span *ngIf="e.observacao" class="muted">Obs: {{ e.observacao }}</span>
-                  </div>
-                  <button class="danger" (click)="remover(e.id)">Remover</button>
-                </div>
-              </div>
-            </ng-container>
+          <div *ngIf="dayScales.length === 0" class="empty">
+            Nenhuma escala neste dia.
+          </div>
 
-            <ng-template #emptyTpl>
-              <div class="emptyState">
-                <div class="emptyIcon">📅</div>
-                <div class="emptyTitle">Nenhuma escala neste dia</div>
-                <div class="emptyText">Clique em “Adicionar” para criar a primeira escala do dia.</div>
-                <button class="btnPrimary small" (click)="openModal(selectedDate)">Criar primeira escala</button>
-              </div>
-            </ng-template>
+          <div *ngFor="let e of dayScales" class="item">
+            <div class="itemMain">
+              <strong>{{ e.turno }}</strong>
+              <span class="muted">{{ labelTipo(e) }}</span>
+              <span class="muted">{{ e.guarnicao }}</span>
+              <span *ngIf="e.observacao" class="muted">Obs: {{ e.observacao }}</span>
+              <span *ngIf="e.relatorio" class="ok">• Relatório anexado</span>
+            </div>
+            <div class="rowBtns">
+              <button class="btnMini" (click)="abrirRelatorio(e.id)">Relatório</button>
+              <button class="danger" (click)="remover(e.id)">Remover</button>
+            </div>
           </div>
         </div>
       </div>
@@ -127,31 +120,26 @@ type Cell = { date?: string; day?: number; isToday?: boolean; count?: number };
               <label>Tipo</label>
               <select [(ngModel)]="draft.tipo" [ngModelOptions]="{standalone:true}">
                 <option [ngValue]="'PMF'">PMF</option>
-                <option [ngValue]="'ESCOLA_SEGURA'">Escola Segura</option>
-                <option [ngValue]="'EXTRA'">Extra</option>
+                <option [ngValue]="'ESCOLA_SEGURA'">ESCOLA SEGURA</option>
+                <option [ngValue]="'EXTRA'">EXTRA</option>
               </select>
             </div>
 
-            <div class="field" *ngIf="draft.tipo === 'EXTRA'">
-              <label>Extra</label>
-              <select [(ngModel)]="draft.extraTipo" [ngModelOptions]="{standalone:true}">
-                <option [ngValue]="null">Selecione...</option>
-                <option [ngValue]="'REFORCO'">Reforço</option>
-                <option [ngValue]="'EVENTO'">Evento</option>
-                <option [ngValue]="'OPERACAO'">Operação</option>
-                <option [ngValue]="'OUTRO'">Outro</option>
+            <div class="field" [class.disabled]="draft.tipo !== 'EXTRA'">
+              <label>Extra (se Tipo=EXTRA)</label>
+              <select [(ngModel)]="draft.extraTipo" [ngModelOptions]="{standalone:true}" [disabled]="draft.tipo !== 'EXTRA'">
+                <option [ngValue]="null">—</option>
+                <option [ngValue]="'OPERACAO'">OPERAÇÃO</option>
+                <option [ngValue]="'REFORCO'">REFORÇO</option>
+                <option [ngValue]="'EVENTO'">EVENTO</option>
+                <option [ngValue]="'OUTRO'">OUTRO</option>
               </select>
             </div>
           </div>
 
           <div class="field">
             <label>Guarnição</label>
-            <input
-              type="text"
-              placeholder="Ex: CB João, SD Maria"
-              [(ngModel)]="draft.guarnicao"
-              [ngModelOptions]="{standalone:true}"
-            />
+            <input type="text" placeholder="Ex: CB João, SD Maria" [(ngModel)]="draft.guarnicao" [ngModelOptions]="{standalone:true}" />
           </div>
 
           <div class="field">
@@ -170,7 +158,7 @@ type Cell = { date?: string; day?: number; isToday?: boolean; count?: number };
   styles: [`
     .page{display:grid;gap:14px;}
     .top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;}
-    h2{margin:0;font-size:22px;}
+    h2{margin:0;font-size:20px;font-weight:900;letter-spacing:.2px;}
     p{margin:6px 0 0;color:#64748b;}
     .controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
     .month{min-width:190px;text-align:center;font-weight:900;color:#0f172a;}
@@ -188,41 +176,32 @@ type Cell = { date?: string; day?: number; isToday?: boolean; count?: number };
     .day{font-weight:900;color:#0f172a;}
     .badge{position:absolute;right:10px;top:10px;background:#0b1f3a;color:#fff;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:900;}
 
-    .side{display:flex;flex-direction:column;min-height:0;}
+    .side{display:grid;gap:10px;}
     .sideHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;}
-    h3{margin:0;font-size:16px;}
+    h3{margin:0;font-size:15px;font-weight:900;}
     .muted{color:#64748b;font-size:12px;}
-
-    .sideBody{flex:1;min-height:0;display:flex;}
-    .list{display:grid;gap:10px;width:100%;overflow:auto;padding-right:4px;}
+    .ok{color:#0f766e;font-size:12px;font-weight:800;}
 
     .item{border:1px solid #eef2f7;border-radius:12px;padding:12px;display:flex;justify-content:space-between;gap:10px;}
     .itemMain{display:grid;gap:4px;}
-
-    .emptyState{
-      flex:1;
-      display:grid;
-      place-items:center;
-      text-align:center;
-      padding:22px;
-      color:#64748b;
-    }
-    .emptyIcon{font-size:28px;opacity:.9;margin-bottom:6px;}
-    .emptyTitle{font-weight:900;color:#0f172a;margin-top:2px;}
-    .emptyText{font-size:12px;margin:6px 0 12px;}
+    .rowBtns{display:flex;gap:8px;align-items:flex-start;}
+    .empty{color:#64748b;padding:10px;}
 
     .btn{padding:10px 12px;border-radius:12px;border:1px solid #e7e9ee;background:#fff;cursor:pointer;font-weight:900;}
     .btnPrimary{padding:10px 12px;border-radius:12px;border:0;cursor:pointer;font-weight:900;color:#fff;background:linear-gradient(180deg,#0f2f57,#0b1f3a);}
     .btnPrimary.small{padding:8px 10px;font-size:12px;}
-    .danger{padding:8px 10px;border-radius:12px;border:1px solid #fecdd3;background:#fff1f2;color:#9f1239;font-weight:900;cursor:pointer;}
+    .btnMini{padding:8px 10px;border-radius:12px;border:1px solid #e7e9ee;background:#fff;cursor:pointer;font-weight:900;font-size:12px;}
+    .danger{padding:8px 10px;border-radius:12px;border:1px solid #fecdd3;background:#fff1f2;color:#9f1239;font-weight:900;cursor:pointer;font-size:12px;}
 
     .overlay{position:fixed;inset:0;background:rgba(2,6,23,.55);display:grid;place-items:center;padding:18px;z-index:999;}
     .modal{width:min(720px,100%);background:#fff;border-radius:16px;border:1px solid #e7e9ee;box-shadow:0 22px 60px rgba(2,6,23,.35);padding:14px;}
     .modalHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:4px 6px 10px;}
     .x{border:1px solid #e7e9ee;background:#fff;border-radius:12px;width:40px;height:40px;cursor:pointer;font-weight:900;}
+
     .form{display:grid;gap:12px;padding:8px 6px 12px;}
     .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
     .field{display:grid;gap:6px;}
+    .disabled{opacity:.65;}
     label{font-weight:900;color:#0f172a;font-size:13px;}
     input, select, textarea{border:1px solid #e7e9ee;border-radius:12px;padding:12px;outline:none;font-weight:700;}
     input:focus, select:focus, textarea:focus{border-color:rgba(15,47,87,.45);box-shadow:0 0 0 4px rgba(15,47,87,.08);}
@@ -294,6 +273,7 @@ export class EscalasCalendarComponent implements OnInit {
   selectDate(date: string) {
     this.selectedDate = date;
     this.loadDay();
+
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { date },
@@ -315,7 +295,9 @@ export class EscalasCalendarComponent implements OnInit {
     };
   }
 
-  closeModal() { this.modalOpen = false; }
+  closeModal() {
+    this.modalOpen = false;
+  }
 
   saveModal() {
     this.formError = '';
@@ -331,12 +313,13 @@ export class EscalasCalendarComponent implements OnInit {
       this.formError = 'Preencha Data, Turno, Tipo e Guarnição.';
       return;
     }
+
     if (tipo === 'EXTRA' && !extraTipo) {
-      this.formError = 'Selecione o tipo de Extra.';
+      this.formError = 'Selecione o tipo do Extra (Operação, Reforço, Evento ou Outro).';
       return;
     }
 
-    this.escalas.salvar({
+    this.escalas.criar({
       data,
       turno,
       tipo,
@@ -355,27 +338,20 @@ export class EscalasCalendarComponent implements OnInit {
     this.loadDay();
   }
 
+  abrirRelatorio(id: string) {
+    this.router.navigate(['/relatorios', id]);
+  }
+
   remover(id: string) {
     this.escalas.remover(id);
     this.build();
     this.loadDay();
   }
 
-  labelTipo(e: Escala): string {
+  labelTipo(e: Escala) {
     if (e.tipo === 'PMF') return 'PMF';
     if (e.tipo === 'ESCOLA_SEGURA') return 'Escola Segura';
-    if (e.tipo === 'EXTRA') return `Extra${e.extraTipo ? ` • ${this.extraLabel(e.extraTipo)}` : ''}`;
-    return e.tipo;
-  }
-
-  private extraLabel(t: ExtraTipo): string {
-    switch (t) {
-      case 'REFORCO': return 'Reforço';
-      case 'EVENTO': return 'Evento';
-      case 'OPERACAO': return 'Operação';
-      case 'OUTRO': return 'Outro';
-      default: return t;
-    }
+    return `Extra • ${e.extraTipo ?? '—'}`;
   }
 
   private build() {
@@ -387,7 +363,7 @@ export class EscalasCalendarComponent implements OnInit {
       .replace(/^\w/, c => c.toUpperCase());
 
     const all = this.escalas.listar();
-    const prefix = `${y}-${String(m + 1).padStart(2, '0')}-`;
+    const prefix = `${y}-${String(m + 1).padStart(2,'0')}-`;
 
     this.counts = new Map<string, number>();
     for (const e of all) {
@@ -404,7 +380,7 @@ export class EscalasCalendarComponent implements OnInit {
     const temp: Cell[] = Array.from({ length: 42 }, () => ({}));
     for (let i = 0; i < daysInMonth; i++) {
       const day = i + 1;
-      const dateISO = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const dateISO = `${y}-${String(m + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
       const idx = start + i;
 
       temp[idx] = {
@@ -414,7 +390,6 @@ export class EscalasCalendarComponent implements OnInit {
         count: this.counts.get(dateISO) ?? 0,
       };
     }
-
     this.cells = temp;
   }
 
@@ -424,13 +399,12 @@ export class EscalasCalendarComponent implements OnInit {
 
   private toISO(d: Date) {
     const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
+    const m = String(d.getMonth() + 1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
     return `${y}-${m}-${day}`;
   }
 
   private mondayIndex(jsDay: number) {
-    // JS: Dom=0 ... Sáb=6 -> queremos Seg=0 ... Dom=6
-    return (jsDay + 6) % 7;
+    return (jsDay + 6) % 7; // Dom=0..Sáb=6 -> Seg=0..Dom=6
   }
 }

@@ -36,4 +36,10 @@ export const routes: Routes = [
   },
 
   { path: '**', redirectTo: 'login' },
+  {
+  path: 'relatorios',
+  loadComponent: () =>
+    import('./features/relatorios/pages/relatorios/relatorios')
+      .then(m => m.RelatoriosComponent),
+},
 ];
