@@ -1,0 +1,111 @@
+<div class="overlay" (click)="close()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="header">
+      <div>
+        <h2>Relatório da Escala</h2>
+        <div class="sub" *ngIf="escala">
+          {{ escala.data }} • {{ escala.turno }} • {{ labelTipo(escala) }}
+        </div>
+      </div>
+
+      <button class="x" type="button" (click)="close()">✕</button>
+    </div>
+
+    <div *ngIf="!escala && !loading" class="emptyState">
+      Escala não encontrada.
+    </div>
+
+    <div *ngIf="loading" class="emptyState">
+      Carregando...
+    </div>
+
+    <div *ngIf="escala" class="content">
+      <div class="field">
+        <label>Texto do relatório</label>
+        <textarea
+          rows="7"
+          [(ngModel)]="relatorioText"
+          placeholder="Descreva a execução da escala, ocorrências, observações e conclusão..."
+        ></textarea>
+      </div>
+
+      <div class="attachTitle">
+        <label>Anexos (opcional)</label>
+        <span class="hint">Dica: evite anexos muito grandes (localStorage tem limite).</span>
+      </div>
+
+      <div class="attachBox">
+        <div class="tabs">
+          <button type="button" class="tab" [class.active]="uploadTab==='upload'" (click)="uploadTab='upload'">
+            Carregar
+          </button>
+          <button type="button" class="tab" [class.active]="uploadTab==='anexos'" (click)="uploadTab='anexos'">
+            Anexos ({{ anexos.length }})
+          </button>
+        </div>
+
+        <!-- TAB UPLOAD -->
+        <div class="tabBody" *ngIf="uploadTab==='upload'">
+          <div class="drop" (dragover)="onDragOver($event)" (drop)="onDrop($event)">
+            <div class="dropInner">
+              <strong>Arraste e solte aqui</strong>
+              <span class="muted">ou</span>
+
+              <label class="btnFile">
+                Selecionar arquivos
+                <input type="file" multiple (change)="onFilesSelected($event)" />
+              </label>
+
+              <span class="smallMuted">PDF, imagens, documentos etc.</span>
+            </div>
+          </div>
+
+          <div *ngIf="uploads.length>0" class="uploadList">
+            <div *ngFor="let u of uploads" class="uploadItem">
+              <div class="uTop">
+                <div class="uMeta">
+                  <strong class="ellipsis">{{ u.name }}</strong>
+                  <span class="muted">{{ formatBytes(u.size) }}</span>
+                </div>
+                <span class="muted">{{ u.progress }}%</span>
+              </div>
+
+              <div class="bar">
+                <div class="fill" [style.width.%]="u.progress"></div>
+              </div>
+
+              <div *ngIf="u.status==='error'" class="uErr">{{ u.error }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB ANEXOS -->
+        <div class="tabBody" *ngIf="uploadTab==='anexos'">
+          <div *ngIf="anexos.length===0" class="emptySmall">
+            Nenhum anexo adicionado.
+          </div>
+
+          <div *ngFor="let a of anexos; let i=index" class="anexoRow">
+            <div class="aLeft">
+              <div class="fileIcon">📎</div>
+              <div class="aMeta">
+                <strong class="ellipsis">{{ a.name }}</strong>
+                <span class="muted">{{ formatBytes(a.size) }}</span>
+              </div>
+            </div>
+
+            <div class="aActions">
+              <button type="button" class="link" (click)="downloadAnexo(a)">Baixar</button>
+              <button type="button" class="danger" (click)="removeAnexo(i)">Remover</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn" (click)="close()">Cancelar</button>
+        <button type="button" class="btnPrimary" (click)="save()">Salvar relatório</button>
+      </div>
+    </div>
+  </div>
+</div>
