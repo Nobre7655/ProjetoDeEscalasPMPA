@@ -1,0 +1,82 @@
+    <div class="page">
+        <div class="top">
+            <div>
+                <h2>Painel Geral</h2>
+                <p>Visão rápida do sistema de escalas.</p>
+            </div>
+
+            <div class="actions">
+                <p-button class="btnGhost" label="Ir para hoje" icon="pi pi-calendar" severity="secondary" [outlined]="true"
+                    (onClick)="irHoje()"></p-button>
+
+                <p-button class="btnMain" label="Abrir calendário" icon="pi pi-calendar-plus"
+                    (onClick)="irCalendario()"></p-button>
+            </div>
+        </div>
+
+        <div class="cards">
+            <div class="card kpi">
+                <div class="kpiTitle">Total de escalas</div>
+                <div class="kpiValue">{{ total }}</div>
+                <div class="kpiHint">Cadastradas no sistema</div>
+            </div>
+
+            <div class="card kpi">
+                <div class="kpiTitle">Escalas hoje</div>
+                <div class="kpiValue">{{ hoje }}</div>
+                <div class="kpiHint">{{ todayISO }}</div>
+            </div>
+
+            <div class="card kpi">
+                <div class="kpiTitle">Este mês</div>
+                <div class="kpiValue">{{ mesAtual }}</div>
+                <div class="kpiHint">{{ monthLabel }}</div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <div class="sectionHeader">
+                    <h3>Próximas escalas (7 dias)</h3>
+
+                    <p-button class="btnGhost" label="Ver todas" icon="pi pi-list" severity="secondary" [outlined]="true"
+                        (onClick)="router.navigate(['/escalas'])"></p-button>
+                </div>
+
+                <div *ngIf="proximas.length === 0" class="empty">
+                    Nenhuma escala nos próximos 7 dias.
+                </div>
+
+                <div *ngFor="let e of proximas" class="row">
+                    <div class="left">
+                        <div class="date">{{ e.data }}</div>
+                        <div class="meta">
+                            <strong>{{ e.turno }}</strong>
+                            <span class="dot">•</span>
+                            <span>{{ tipoLabel(e) }}</span>
+                        </div>
+                        <div class="muted">{{ e.guarnicao }}</div>
+                        <div class="muted" *ngIf="e.observacao">Obs: {{ e.observacao }}</div>
+                    </div>
+
+                    <p-button class="btnMain" label="Abrir dia" icon="pi pi-external-link"
+                        (onClick)="abrirDia(e.data)"></p-button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Atalhos</h3>
+
+                <div class="shortcuts">
+                    <p-button class="btnMain" label="Criar escala" icon="pi pi-plus" (onClick)="irCalendario()"></p-button>
+
+                    <p-button class="btnGhost" label="Ver listagem" icon="pi pi-list" severity="secondary" [outlined]="true"
+                        (onClick)="router.navigate(['/escalas'])"></p-button>
+                </div>
+
+                <div class="hint">
+                    Dica: use o <b>Calendário</b> para criar escalas rapidamente por dia.
+                </div>
+            </div>
+        </div>
+    </div>

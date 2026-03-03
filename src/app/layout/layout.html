@@ -1,0 +1,99 @@
+<div class="shell">
+  <!-- TOPBAR (mobile) -->
+  <header class="topbar">
+    <div class="topBrand">
+      <img class="topLogo" src="/assets/brasao-pmpa.png" alt="Brasão PMPA" />
+      <div class="topText">
+        <div class="topTitle">Escalas DITEL</div>
+        <div class="topSub">Sistema de Escalas</div>
+      </div>
+    </div>
+
+    <p-button
+      class="menuBtn"
+      icon="pi pi-bars"
+      severity="secondary"
+      [outlined]="true"
+      (onClick)="toggleMobile()"
+      ariaLabel="Abrir menu"
+    ></p-button>
+  </header>
+
+  <!-- Overlay mobile -->
+  <div class="overlay" *ngIf="mobileOpen" (click)="closeMobile()"></div>
+
+  <aside class="sidebar" [class.mobileOpen]="mobileOpen">
+    <!-- BRAND -->
+    <div class="brand">
+      <div class="brandLogo" aria-hidden="true">
+        <img src="/assets/brasao-pmpa.png" alt="Brasão PMPA" />
+      </div>
+
+      <div class="brandText">
+        <div class="brandTitle">Escalas DITEL</div>
+        <div class="brandSub">Polícia Militar do Pará • Sistema de Escalas</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- MENU -->
+    <nav class="menu" aria-label="Menu lateral">
+      <a
+        class="menuItem"
+        routerLink="/painel"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="closeMobile()"
+      >
+        <i class="pi pi-home menuIco"></i>
+        <span class="label">Painel Geral</span>
+      </a>
+
+      <a class="menuItem" routerLink="/calendario" routerLinkActive="active" (click)="closeMobile()">
+        <i class="pi pi-calendar menuIco"></i>
+        <span class="label">Calendário</span>
+      </a>
+
+      <a class="menuItem" routerLink="/escalas" routerLinkActive="active" (click)="closeMobile()">
+        <i class="pi pi-list menuIco"></i>
+        <span class="label">Escalas</span>
+      </a>
+
+      <a class="menuItem" routerLink="/relatorios" routerLinkActive="active" (click)="closeMobile()">
+        <i class="pi pi-file menuIco"></i>
+        <span class="label">Relatórios</span>
+      </a>
+    </nav>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      <div class="userBox" *ngIf="user as u">
+        <div class="avatar" aria-hidden="true">
+          {{ (u.displayName || 'U').slice(0, 1).toUpperCase() }}
+        </div>
+        <div class="userText">
+          <div class="userName">{{ u.displayName }}</div>
+          <div class="userRole">{{ u.role.toUpperCase() }}</div>
+        </div>
+      </div>
+
+      <p-button
+        label="Sair"
+        icon="pi pi-sign-out"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="sair()"
+      ></p-button>
+
+      <div class="version">
+        <span class="status" aria-hidden="true"></span>
+        v0.1
+      </div>
+    </div>
+  </aside>
+
+  <main class="content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

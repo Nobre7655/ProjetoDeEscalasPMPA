@@ -1,5 +1,13 @@
-<div class="overlay" (click)="close()">
-  <div class="modal" (click)="$event.stopPropagation()">
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="true"
+  [style]="{ width: 'min(920px, 95vw)' }"
+  (onHide)="close()"
+>
+  <ng-template pTemplate="header">
     <div class="header">
       <div>
         <h2>Relatório da Escala</h2>
@@ -8,104 +16,143 @@
         </div>
       </div>
 
-      <button class="x" type="button" (click)="close()">✕</button>
+      <p-button
+        icon="pi pi-times"
+        [rounded]="true"
+        severity="secondary"
+        (onClick)="close()"
+        ariaLabel="Fechar"
+      ></p-button>
+    </div>
+  </ng-template>
+
+  <div *ngIf="!escala && !loading" class="emptyState">Escala não encontrada.</div>
+  <div *ngIf="loading" class="emptyState">Carregando...</div>
+
+  <div *ngIf="escala" class="content">
+    <div class="tabBar">
+      <p-selectButton
+        [options]="tabOptions"
+        [(ngModel)]="tab"
+        optionLabel="label"
+        optionValue="value"
+      ></p-selectButton>
+
+      <span class="pill" *ngIf="tab === 'anexos' && anexos.length">{{ anexos.length }}</span>
     </div>
 
-    <div *ngIf="!escala && !loading" class="emptyState">
-      Escala não encontrada.
-    </div>
-
-    <div *ngIf="loading" class="emptyState">
-      Carregando...
-    </div>
-
-    <div *ngIf="escala" class="content">
+    <!-- TEXTO -->
+    <div *ngIf="tab === 'texto'" class="panel">
       <div class="field">
         <label>Texto do relatório</label>
         <textarea
-          rows="7"
-          [(ngModel)]="relatorioText"
+          pTextarea
+          rows="10"
+          [(ngModel)]="relatorioTexto"
+          [ngModelOptions]="{ standalone: true }"
           placeholder="Descreva a execução da escala, ocorrências, observações e conclusão..."
         ></textarea>
       </div>
+    </div>
 
+    <!-- ANEXOS -->
+    <div *ngIf="tab === 'anexos'" class="panel">
       <div class="attachTitle">
         <label>Anexos (opcional)</label>
         <span class="hint">Dica: evite anexos muito grandes (localStorage tem limite).</span>
       </div>
 
-      <div class="attachBox">
-        <div class="tabs">
-          <button type="button" class="tab" [class.active]="uploadTab==='upload'" (click)="uploadTab='upload'">
-            Carregar
-          </button>
-          <button type="button" class="tab" [class.active]="uploadTab==='anexos'" (click)="uploadTab='anexos'">
-            Anexos ({{ anexos.length }})
-          </button>
-        </div>
-
-        <!-- TAB UPLOAD -->
-        <div class="tabBody" *ngIf="uploadTab==='upload'">
-          <div class="drop" (dragover)="onDragOver($event)" (drop)="onDrop($event)">
-            <div class="dropInner">
-              <strong>Arraste e solte aqui</strong>
-              <span class="muted">ou</span>
-
-              <label class="btnFile">
-                Selecionar arquivos
-                <input type="file" multiple (change)="onFilesSelected($event)" />
-              </label>
-
-              <span class="smallMuted">PDF, imagens, documentos etc.</span>
-            </div>
-          </div>
-
-          <div *ngIf="uploads.length>0" class="uploadList">
-            <div *ngFor="let u of uploads" class="uploadItem">
-              <div class="uTop">
-                <div class="uMeta">
-                  <strong class="ellipsis">{{ u.name }}</strong>
-                  <span class="muted">{{ formatBytes(u.size) }}</span>
-                </div>
-                <span class="muted">{{ u.progress }}%</span>
-              </div>
-
-              <div class="bar">
-                <div class="fill" [style.width.%]="u.progress"></div>
-              </div>
-
-              <div *ngIf="u.status==='error'" class="uErr">{{ u.error }}</div>
-            </div>
+      <div
+        class="dropzone"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+        [class.dragging]="dragging"
+      >
+        <div class="dzTop">
+          <div class="dzIcon"><i class="pi pi-upload"></i></div>
+          <div class="dzText">
+            <strong>Arraste e solte arquivos aqui</strong>
+            <span>ou clique para selecionar</span>
           </div>
         </div>
 
-        <!-- TAB ANEXOS -->
-        <div class="tabBody" *ngIf="uploadTab==='anexos'">
-          <div *ngIf="anexos.length===0" class="emptySmall">
-            Nenhum anexo adicionado.
+        <label class="filePick">
+          <i class="pi pi-folder-open"></i>
+          Selecionar arquivos
+          <input type="file" multiple (change)="onFilesSelected($event)" />
+        </label>
+
+        <div class="hintSmall">PDF, imagens, documentos etc.</div>
+      </div>
+
+      <!-- uploads -->
+      <div *ngIf="uploads.length" class="list">
+        <div class="listTitle">Carregando</div>
+
+        <div *ngFor="let u of uploads" class="fileRow">
+          <div class="fileMain">
+            <div class="fileName">{{ u.name }}</div>
+            <div class="fileSub">{{ formatBytes(u.size) }}</div>
+
+            <div class="bar">
+              <div class="barFill" [style.width.%]="u.progress"></div>
+            </div>
+
+            <div class="fileSub" *ngIf="u.state==='lendo'">Lendo arquivo…</div>
+            <div class="fileSub ok" *ngIf="u.state==='pronto'">Pronto</div>
+            <div class="fileSub err" *ngIf="u.state==='erro'">{{ u.error || 'Erro ao ler' }}</div>
           </div>
 
-          <div *ngFor="let a of anexos; let i=index" class="anexoRow">
-            <div class="aLeft">
-              <div class="fileIcon">📎</div>
-              <div class="aMeta">
-                <strong class="ellipsis">{{ a.name }}</strong>
-                <span class="muted">{{ formatBytes(a.size) }}</span>
-              </div>
-            </div>
+          <p-button
+            label="Remover"
+            severity="danger"
+            [outlined]="true"
+            (onClick)="removeUpload(u.id)"
+          ></p-button>
+        </div>
+      </div>
 
-            <div class="aActions">
-              <button type="button" class="link" (click)="downloadAnexo(a)">Baixar</button>
-              <button type="button" class="danger" (click)="removeAnexo(i)">Remover</button>
-            </div>
+      <!-- anexos -->
+      <div *ngIf="anexos.length" class="list">
+        <div class="listTitle">Anexos</div>
+
+        <div *ngFor="let a of anexos" class="fileRow">
+          <div class="fileMain">
+            <div class="fileName">{{ a.name }}</div>
+            <div class="fileSub">{{ formatBytes(a.size) }}</div>
+          </div>
+
+          <div class="actionsRight">
+            <p-button
+              label="Baixar"
+              icon="pi pi-download"
+              severity="secondary"
+              [outlined]="true"
+              (onClick)="downloadAnexo(a)"
+            ></p-button>
+
+            <p-button
+              label="Remover"
+              icon="pi pi-trash"
+              severity="danger"
+              [outlined]="true"
+              (onClick)="removeAnexoById(a.id)"
+            ></p-button>
           </div>
         </div>
       </div>
 
-      <div class="actions">
-        <button type="button" class="btn" (click)="close()">Cancelar</button>
-        <button type="button" class="btnPrimary" (click)="save()">Salvar relatório</button>
+      <div *ngIf="!uploads.length && !anexos.length" class="emptySmall">
+        Nenhum anexo ainda. Use a área de upload acima.
       </div>
     </div>
   </div>
-</div>
+
+  <ng-template pTemplate="footer">
+    <div class="footer">
+      <p-button label="Cancelar" severity="secondary" (onClick)="close()"></p-button>
+      <p-button label="Salvar relatório" icon="pi pi-check" (onClick)="save()"></p-button>
+    </div>
+  </ng-template>
+</p-dialog>

@@ -1,15 +1,15 @@
 import { TestBed } from '@angular/core/testing';
-import { EscalasCalendarComponent } from './escalas-calendar';
+import { RelatoriosComponent } from './relatorios';
 
-describe('EscalasCalendarComponent', () => {
+describe('RelatoriosComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [EscalasCalendarComponent],
+      imports: [RelatoriosComponent],
     }).compileComponents();
   });
 
   it('should create', () => {
-    const fixture = TestBed.createComponent(EscalasCalendarComponent);
+    const fixture = TestBed.createComponent(RelatoriosComponent);
     expect(fixture.componentInstance).toBeTruthy();
   });
 });

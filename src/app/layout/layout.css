@@ -1,0 +1,343 @@
+/* Layout geral */
+.shell {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    min-height: 100vh;
+    background: #f4f6fa;
+}
+
+/* TOPBAR (mobile) */
+.topbar {
+    display: none;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: linear-gradient(180deg, #0f2f57, #0b1f3a);
+    color: #fff;
+    padding: 12px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, .12);
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.topBrand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.topLogo {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    background: #fff;
+    padding: 5px;
+    object-fit: contain;
+    box-shadow: 0 10px 24px rgba(2, 6, 23, .18);
+}
+
+.topText {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+}
+
+.topTitle {
+    font-weight: 1000;
+    letter-spacing: .2px;
+    line-height: 1;
+}
+
+.topSub {
+    font-size: 12px;
+    opacity: .85;
+    font-weight: 650;
+    line-height: 1;
+}
+
+.overlay {
+    display: none;
+}
+
+/* Sidebar */
+.sidebar {
+    background:
+        radial-gradient(800px 800px at -10% -10%, rgba(212, 175, 55, .16) 0%, rgba(212, 175, 55, 0) 55%),
+        radial-gradient(700px 700px at 110% 15%, rgba(255, 255, 255, .10) 0%, rgba(255, 255, 255, 0) 55%),
+        linear-gradient(180deg, #0f2f57 0%, #0b1f3a 55%, #07162a 100%);
+    color: #ffffff;
+    padding: 18px 16px;
+    border-right: 1px solid rgba(255, 255, 255, .10);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* Brand topo */
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 8px;
+}
+
+.brandLogo {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: #ffffff;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, .14);
+    box-shadow: 0 14px 30px rgba(2, 6, 23, .28);
+}
+
+.brandLogo img {
+    width: 46px;
+    height: 46px;
+    object-fit: contain;
+}
+
+.brandText {
+    min-width: 0;
+}
+
+.brandTitle {
+    font-size: 18px;
+    font-weight: 1000;
+    letter-spacing: .2px;
+    line-height: 1.1;
+}
+
+.brandSub {
+    margin-top: 4px;
+    font-size: 12px;
+    opacity: .86;
+    font-weight: 650;
+    line-height: 1.25;
+}
+
+.divider {
+    height: 1px;
+    background: rgba(255, 255, 255, .12);
+    margin: 12px 0 14px;
+}
+
+/* Menu */
+.menu {
+    display: grid;
+    gap: 10px;
+}
+
+/* Item mais leve (menos “caixão”) */
+.menuItem {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 12px 12px;
+    border-radius: 16px;
+
+    text-decoration: none;
+    color: #ffffff;
+
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid rgba(255, 255, 255, .10);
+
+    font-weight: 900;
+    font-size: 14px;
+
+    transition: background .15s ease, border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+    outline: none;
+}
+
+/* Ícone */
+.menuIco {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .10);
+
+    font-size: 16px;
+    opacity: .92;
+    flex: 0 0 auto;
+}
+
+.menuItem:hover {
+    background: rgba(255, 255, 255, .07);
+    border-color: rgba(255, 255, 255, .16);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(2, 6, 23, .22);
+}
+
+.menuItem:focus-visible {
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, .22), 0 10px 24px rgba(2, 6, 23, .22);
+    border-color: rgba(212, 175, 55, .55);
+}
+
+/* Ativo: pill + glow (bem “premium”) */
+.menuItem.active {
+    background: rgba(255, 255, 255, .10);
+    border-color: rgba(212, 175, 55, .55);
+    box-shadow:
+        0 0 0 4px rgba(212, 175, 55, .10),
+        0 18px 38px rgba(2, 6, 23, .28);
+}
+
+.menuItem.active::before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 10px;
+    bottom: 10px;
+    width: 4px;
+    background: #d4af37;
+    border-radius: 999px;
+}
+
+.menuItem.active .menuIco {
+    background: rgba(212, 175, 55, .16);
+    border-color: rgba(212, 175, 55, .55);
+    color: #d4af37;
+    opacity: 1;
+}
+
+/* Footer */
+.footer {
+    margin-top: auto;
+    display: grid;
+    gap: 12px;
+    padding-top: 14px;
+}
+
+/* User card mais clean */
+.userBox {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 12px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(255, 255, 255, .12);
+    box-shadow: 0 12px 28px rgba(2, 6, 23, .22);
+}
+
+.avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    background: #d4af37;
+    color: #0b1f3a;
+    font-weight: 1000;
+    font-size: 16px;
+    flex: 0 0 auto;
+}
+
+.userText {
+    min-width: 0;
+}
+
+.userName {
+    font-size: 14px;
+    font-weight: 1000;
+    line-height: 1.1;
+}
+
+.userRole {
+    margin-top: 4px;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .06em;
+    opacity: .85;
+}
+
+/* PrimeNG button (Sair) ocupa largura e fica alinhado */
+:host ::ng-deep .p-button {
+    border-radius: 14px;
+}
+
+:host ::ng-deep .p-button.p-button-secondary.p-button-outlined {
+    width: 100%;
+    justify-content: center;
+    border-color: rgba(255, 255, 255, .18);
+    color: #ffffff;
+    background: rgba(255, 255, 255, .04);
+}
+
+:host ::ng-deep .p-button.p-button-secondary.p-button-outlined:hover {
+    background: rgba(255, 255, 255, .08);
+    border-color: rgba(255, 255, 255, .26);
+}
+
+/* Versão mais discreta */
+.version {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    font-size: 12px;
+    font-weight: 850;
+    opacity: .92;
+}
+
+.status {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: #22c55e;
+    box-shadow: 0 0 0 5px rgba(34, 197, 94, .16);
+}
+
+/* Conteúdo */
+.content {
+    padding: 18px;
+}
+
+/* Mobile */
+@media (max-width: 980px) {
+    .shell {
+        grid-template-columns: 1fr;
+    }
+
+    .topbar {
+        display: flex;
+    }
+
+    .overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(2, 6, 23, .55);
+        z-index: 20;
+    }
+
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 320px;
+        transform: translateX(-105%);
+        transition: transform .18s ease;
+        z-index: 25;
+    }
+
+    .sidebar.mobileOpen {
+        transform: translateX(0);
+    }
+
+    .content {
+        padding: 14px;
+    }
+}

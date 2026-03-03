@@ -1,0 +1,316 @@
+.page {
+    display: grid;
+    gap: 14px;
+}
+
+.top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+h2 {
+    margin: 0;
+    font-size: 22px;
+}
+
+p {
+    margin: 6px 0 0;
+    color: #64748b;
+}
+
+.card {
+    background: #fff;
+    border: 1px solid #e7e9ee;
+    border-radius: 14px;
+    box-shadow: 0 12px 34px rgba(2, 6, 23, .10);
+    padding: 14px;
+}
+
+.tableWrap {
+    overflow: auto;
+}
+
+.tbl {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+thead th {
+    font-size: 12px;
+    color: #64748b;
+    text-align: left;
+    padding: 12px 10px;
+    border-bottom: 1px solid #eef2f7;
+}
+
+tbody td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.empty {
+    color: #64748b;
+    padding: 16px;
+    text-align: center;
+}
+
+.status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 900;
+    font-size: 12px;
+    color: #9f1239;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    padding: 4px 10px;
+    border-radius: 999px;
+}
+
+.status.ok {
+    color: #065f46;
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+}
+
+.dlgHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 900;
+}
+
+.muted {
+    color: #64748b;
+    font-size: 12px;
+    margin: 6px 0 0;
+}
+
+.dlgBody {
+    display: grid;
+    gap: 12px;
+    padding-top: 6px;
+}
+
+.dlgFooter {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+.tabBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.pill {
+    background: #0b1f3a;
+    color: #fff;
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.form {
+    display: grid;
+    gap: 12px;
+    padding: 6px 2px;
+}
+
+.field {
+    display: grid;
+    gap: 6px;
+}
+
+label {
+    font-weight: 900;
+    color: #0f172a;
+    font-size: 13px;
+}
+
+textarea[pTextarea] {
+    width: 100%;
+    border: 1px solid #e7e9ee;
+    border-radius: 12px;
+    padding: 12px;
+    outline: none;
+    font-weight: 700;
+}
+
+.errorBox {
+    margin: 6px 2px;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #fecdd3;
+    background: #fff1f2;
+    color: #9f1239;
+    font-weight: 900;
+}
+
+.dropzone {
+    border: 1px dashed rgba(15, 47, 87, .35);
+    border-radius: 14px;
+    padding: 14px;
+    background: linear-gradient(180deg, rgba(15, 47, 87, .04), rgba(2, 6, 23, .00));
+    display: grid;
+    gap: 12px;
+}
+
+.dropzone.dragging {
+    border-color: rgba(212, 175, 55, .8);
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, .15);
+}
+
+.dzTop {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.dzIcon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    background: rgba(15, 47, 87, .08);
+    font-weight: 900;
+}
+
+.dzText {
+    display: grid;
+    gap: 2px;
+}
+
+.dzText strong {
+    color: #0f172a;
+}
+
+.dzText span {
+    color: #64748b;
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.hint {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 700;
+}
+
+.filePick {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 0;
+    cursor: pointer;
+    font-weight: 900;
+    color: #fff;
+    background: linear-gradient(180deg, #0f2f57, #0b1f3a);
+    width: max-content;
+}
+
+.filePick input {
+    display: none;
+}
+
+.list {
+    margin-top: 14px;
+    display: grid;
+    gap: 10px;
+}
+
+.listTitle {
+    font-weight: 900;
+    color: #0f172a;
+    font-size: 13px;
+}
+
+.fileRow {
+    border: 1px solid #eef2f7;
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+}
+
+.fileMain {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+}
+
+.fileName {
+    font-weight: 900;
+    color: #0f172a;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 520px;
+}
+
+.fileSub {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.ok {
+    color: #16a34a;
+}
+
+.err {
+    color: #9f1239;
+}
+
+.bar {
+    height: 10px;
+    border-radius: 999px;
+    background: #eef2f7;
+    overflow: hidden;
+}
+
+.barFill {
+    height: 100%;
+    background: linear-gradient(180deg, #0f2f57, #0b1f3a);
+    width: 0%;
+    transition: width .25s ease;
+}
+
+.actionsRight {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.emptyNote {
+    color: #64748b;
+    font-weight: 800;
+    padding: 6px 0;
+}

@@ -1,0 +1,161 @@
+<div class="page">
+  <div class="top">
+    <div>
+      <h2>Relatórios</h2>
+      <p>Escreva o relatório e anexe arquivos para cada escala finalizada.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="tableWrap">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Turno</th>
+            <th>Tipo</th>
+            <th>Guarnição</th>
+            <th>Status</th>
+            <th style="text-align:right;">Ações</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let e of escalas">
+            <td class="mono">{{ e.data }}</td>
+            <td><strong>{{ e.turno }}</strong></td>
+            <td>{{ tipoLabel(e) }}</td>
+            <td>{{ e.guarnicao }}</td>
+            <td>
+              <span class="status" [class.ok]="hasReport(e.id)">
+                {{ hasReport(e.id) ? 'Preenchido' : 'Pendente' }}
+              </span>
+            </td>
+            <td style="text-align:right;">
+              <p-button label="Abrir" icon="pi pi-file-edit" (onClick)="openReport(e)"></p-button>
+            </td>
+          </tr>
+
+          <tr *ngIf="escalas.length === 0">
+            <td colspan="6" class="empty">Nenhuma escala cadastrada.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- DIALOG PRIME -->
+<p-dialog [(visible)]="modalOpen" [modal]="true" [draggable]="false" [resizable]="false" [dismissableMask]="true"
+  [style]="{ width: 'min(900px, 95vw)' }" (onHide)="close()">
+  <ng-template pTemplate="header">
+    <div class="dlgHeader">
+      <div>
+        <h3>Relatório da Escala</h3>
+        <p class="muted">
+          {{ selected?.data }} • {{ selected?.turno }} • {{ selected ? tipoLabel(selected) : '' }}
+        </p>
+      </div>
+
+      <p-button icon="pi pi-times" [rounded]="true" severity="secondary" (onClick)="close()"></p-button>
+    </div>
+  </ng-template>
+
+  <div class="dlgBody">
+    <div class="tabBar">
+      <p-selectButton [options]="tabOptions" [(ngModel)]="tab" optionLabel="label" optionValue="value"></p-selectButton>
+
+      <span class="pill" *ngIf="tab === 'anexos' && draftAnexos.length">{{ draftAnexos.length }}</span>
+    </div>
+
+    <!-- TEXTO -->
+    <div *ngIf="tab==='texto'" class="form">
+      <div class="field">
+        <label>Texto do relatório</label>
+        <textarea pTextarea rows="9" [(ngModel)]="draftText" [ngModelOptions]="{standalone:true}"
+          placeholder="Descreva a execução da escala, ocorrências, observações e conclusão..."></textarea>
+      </div>
+    </div>
+
+    <!-- ANEXOS -->
+    <div *ngIf="tab==='anexos'" class="form">
+      <div *ngIf="uploadError" class="errorBox">{{ uploadError }}</div>
+
+      <div class="dropzone" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)"
+        [class.dragging]="dragging">
+        <div class="dzTop">
+          <div class="dzIcon"><i class="pi pi-upload"></i></div>
+          <div class="dzText">
+            <strong>Arraste e solte arquivos aqui</strong>
+            <span>ou clique para selecionar</span>
+          </div>
+        </div>
+
+        <label class="filePick">
+          <i class="pi pi-folder-open"></i>
+          Selecionar arquivos
+          <input type="file" multiple (change)="onFiles($event)" />
+        </label>
+
+        <div class="hint">
+          Limites: até 2MB por arquivo e 4MB no total (localStorage).
+        </div>
+      </div>
+
+      <!-- CARREGANDO -->
+      <div *ngIf="uploads.length" class="list">
+        <div class="listTitle">Carregando</div>
+
+        <div *ngFor="let u of uploads" class="fileRow">
+          <div class="fileMain">
+            <div class="fileName">{{ u.name }}</div>
+            <div class="fileSub">{{ formatSize(u.size) }}</div>
+
+            <div class="bar">
+              <div class="barFill" [style.width.%]="u.progress"></div>
+            </div>
+
+            <div class="fileSub" *ngIf="u.state==='lendo'">Lendo arquivo…</div>
+            <div class="fileSub ok" *ngIf="u.state==='pronto'">Pronto</div>
+            <div class="fileSub err" *ngIf="u.state==='erro'">Erro ao ler</div>
+          </div>
+
+          <p-button label="Remover" severity="danger" [outlined]="true" (onClick)="removeUpload(u.id)"></p-button>
+        </div>
+      </div>
+
+      <!-- LISTA DE ANEXOS -->
+      <div *ngIf="draftAnexos.length" class="list">
+        <div class="listTitle">Anexos</div>
+
+        <div class="fileRow" *ngFor="let a of draftAnexos; let i = index">
+          <div class="fileMain">
+            <div class="fileName">{{ a.name }}</div>
+            <div class="fileSub">{{ formatSize(a.size) }}</div>
+          </div>
+
+          <div class="actionsRight">
+            <p-button label="Baixar" icon="pi pi-download" severity="secondary" [outlined]="true"
+              (onClick)="baixarAnexo(a)"></p-button>
+
+            <p-button label="Remover" icon="pi pi-trash" severity="danger" [outlined]="true"
+              (onClick)="removeAnexo(i)"></p-button>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="!uploads.length && !draftAnexos.length" class="emptyNote">
+        Nenhum anexo ainda. Use a área de upload acima.
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="dlgFooter">
+      <p-button label="Cancelar" severity="secondary" (onClick)="close()"></p-button>
+      <p-button label="Gerar PDF" icon="pi pi-file-pdf" severity="secondary" [outlined]="true"
+        (onClick)="gerarPdf()"></p-button>
+      <p-button label="Salvar relatório" icon="pi pi-check" (onClick)="save()"></p-button>
+    </div>
+  </ng-template>
+</p-dialog>

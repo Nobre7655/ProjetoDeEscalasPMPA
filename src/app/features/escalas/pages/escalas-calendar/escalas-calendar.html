@@ -1,1 +1,98 @@
-<p>escalas-calendar works!</p>
+<div class="page">
+    <div class="top">
+        <div>
+            <h2>Calendário de Escalas</h2>
+            <p>Selecione um dia para ver/cadastrar escalas.</p>
+        </div>
+
+        <div class="controls">
+            <p-button icon="pi pi-chevron-left" severity="secondary" [rounded]="true"
+                (onClick)="prevMonth()"></p-button>
+            <div class="month">{{ monthLabel }}</div>
+            <p-button icon="pi pi-chevron-right" severity="secondary" [rounded]="true"
+                (onClick)="nextMonth()"></p-button>
+        </div>
+    </div>
+
+    <div class="card cal">
+        <div class="weekdays">
+            <div>Seg</div>
+            <div>Ter</div>
+            <div>Qua</div>
+            <div>Qui</div>
+            <div>Sex</div>
+            <div>Sáb</div>
+            <div>Dom</div>
+        </div>
+
+        <div class="cells">
+            <button *ngFor="let c of cells" class="cell" [class.empty]="!c.date" [class.today]="c.isToday"
+                [class.selected]="c.date === selectedDate" (click)="c.date && selectDate(c.date!)" type="button">
+                <div class="day">{{ c.day ?? '' }}</div>
+                <div *ngIf="c.count && c.count > 0" class="badge">{{ c.count }}</div>
+            </button>
+        </div>
+    </div>
+
+    <div class="pageActions">
+        <p-button label="Nova escala" icon="pi pi-plus" (onClick)="openModal(selectedDate)"></p-button>
+    </div>
+</div>
+
+<p-dialog header="Nova escala" [(visible)]="modalOpen" [modal]="true" [draggable]="false" [resizable]="false"
+    [dismissableMask]="true" [style]="{ width: 'min(740px, 95vw)' }">
+    <div class="dialogBody">
+        <div *ngIf="formError" class="errorBox">{{ formError }}</div>
+
+        <div class="form">
+            <div class="row2">
+                <div class="field">
+                    <label>Data</label>
+                    <p-datepicker [(ngModel)]="draftDate" [showIcon]="true" dateFormat="yy-mm-dd"
+                        [ngModelOptions]="{ standalone: true }"></p-datepicker>
+                </div>
+
+                <div class="field">
+                    <label>Turno</label>
+                    <p-select [options]="turnos" optionLabel="label" optionValue="value" [(ngModel)]="draft.turno"
+                        [ngModelOptions]="{ standalone: true }" placeholder="Selecione"></p-select>
+                </div>
+            </div>
+
+            <div class="row2">
+                <div class="field">
+                    <label>Tipo</label>
+                    <p-select [options]="tipos" optionLabel="label" optionValue="value" [(ngModel)]="draft.tipo"
+                        [ngModelOptions]="{ standalone: true }" placeholder="Selecione"
+                        (onChange)="onTipoChange($event.value)"></p-select>
+                </div>
+
+                <div class="field" [class.disabled]="draft.tipo !== 'EXTRA'">
+                    <label>Extra (se Tipo=EXTRA)</label>
+                    <p-select [options]="extras" optionLabel="label" optionValue="value" [(ngModel)]="draft.extraTipo"
+                        [ngModelOptions]="{ standalone: true }" placeholder="Selecione"
+                        [disabled]="draft.tipo !== 'EXTRA'" [showClear]="true"></p-select>
+                </div>
+            </div>
+
+            <div class="field">
+                <label>Guarnição</label>
+                <input pInputText type="text" placeholder="Ex: CB João, SD Maria" [(ngModel)]="draft.guarnicao"
+                    [ngModelOptions]="{ standalone: true }" />
+            </div>
+
+            <div class="field">
+                <label>Observação (opcional)</label>
+                <textarea pTextarea rows="3" [(ngModel)]="draft.observacao"
+                    [ngModelOptions]="{ standalone: true }"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="dialogFooter">
+            <p-button label="Cancelar" severity="secondary" (onClick)="closeModal()"></p-button>
+            <p-button label="Salvar" icon="pi pi-check" (onClick)="saveModal()"></p-button>
+        </div>
+    </ng-template>
+</p-dialog>

@@ -1,5 +1,3 @@
-// src/app/features/relatorios/pages/relatorio-editor/relatorio-editor.ts
-
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -8,325 +6,58 @@ import { FormsModule } from '@angular/forms';
 import { EscalasService } from '../../../../core/services/escalas';
 import { Escala, Anexo } from '../../../../core/models/escala.model';
 
+/** PrimeNG v21 */
+import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
+import { TextareaModule } from 'primeng/textarea';
+import { SelectButtonModule } from 'primeng/selectbutton';
+
 type UploadItem = {
   id: string;
   name: string;
   size: number;
   mime: string;
-  progress: number; // 0..100 (visual)
+  progress: number;
   state: 'lendo' | 'pronto' | 'erro';
+  error?: string;
 };
+
+type TabKey = 'texto' | 'anexos';
 
 @Component({
   selector: 'app-relatorio-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  template: `
-    <div class="overlay" (click)="close()">
-      <div class="modal" (click)="$event.stopPropagation()">
-        <div class="header">
-          <div>
-            <h2>Relatório da Escala</h2>
-            <div class="meta" *ngIf="escala">
-              {{ escala.data }} • {{ escala.turno }} • {{ labelTipo(escala) }}
-            </div>
-          </div>
-          <button class="x" type="button" (click)="close()">✕</button>
-        </div>
+  imports: [
+    CommonModule,
+    FormsModule,
 
-        <div class="tabs">
-          <button type="button" class="tab" [class.active]="tab==='texto'" (click)="tab='texto'">
-            Texto
-          </button>
-          <button type="button" class="tab" [class.active]="tab==='anexos'" (click)="tab='anexos'">
-            Anexos
-            <span class="pill" *ngIf="anexos.length">{{ anexos.length }}</span>
-          </button>
-        </div>
-
-        <!-- TAB TEXTO -->
-        <div *ngIf="tab==='texto'" class="content">
-          <label class="label">Texto do relatório</label>
-          <textarea
-            class="textarea"
-            rows="10"
-            [(ngModel)]="relatorioTexto"
-            [ngModelOptions]="{standalone:true}"
-            placeholder="Descreva a execução da escala, ocorrências, observações e conclusão..."
-          ></textarea>
-        </div>
-
-        <!-- TAB ANEXOS -->
-        <div *ngIf="tab==='anexos'" class="content">
-          <div
-            class="dropzone"
-            (dragover)="onDragOver($event)"
-            (dragleave)="onDragLeave($event)"
-            (drop)="onDrop($event)"
-            [class.dragging]="dragging"
-          >
-            <div class="dzTop">
-              <div class="dzIcon">⬆</div>
-              <div class="dzText">
-                <strong>Arraste e solte arquivos aqui</strong>
-                <span>ou clique para selecionar</span>
-              </div>
-            </div>
-
-            <button class="btn" type="button" (click)="fileInput.click()">
-              Selecionar arquivos
-            </button>
-
-            <input
-              #fileInput
-              type="file"
-              multiple
-              (change)="onFilesSelected($event)"
-              style="display:none"
-            />
-
-            <div class="hint">
-              Dica: evite anexos muito grandes (localStorage tem limite).
-            </div>
-          </div>
-
-          <!-- UPLOADS EM ANDAMENTO -->
-          <div *ngIf="uploads.length" class="list">
-            <div class="listTitle">Carregando</div>
-
-            <div *ngFor="let u of uploads" class="fileRow">
-              <div class="fileMain">
-                <div class="fileName">{{ u.name }}</div>
-                <div class="fileSub">{{ formatBytes(u.size) }}</div>
-
-                <div class="bar">
-                  <div class="barFill" [style.width.%]="u.progress"></div>
-                </div>
-
-                <div class="fileSub" *ngIf="u.state==='lendo'">Lendo arquivo…</div>
-                <div class="fileSub ok" *ngIf="u.state==='pronto'">Pronto</div>
-                <div class="fileSub err" *ngIf="u.state==='erro'">Erro ao ler</div>
-              </div>
-
-              <button class="danger" type="button" (click)="removeUpload(u.id)">
-                Remover
-              </button>
-            </div>
-          </div>
-
-          <!-- ANEXOS PRONTOS -->
-          <div *ngIf="anexos.length" class="list">
-            <div class="listTitle">Anexos</div>
-
-            <div *ngFor="let a of anexos" class="fileRow">
-              <div class="fileMain">
-                <div class="fileName">{{ a.name }}</div>
-                <div class="fileSub">{{ formatBytes(a.size) }}</div>
-              </div>
-
-              <div class="actionsRight">
-                <a class="link" [href]="a.dataUrl" [download]="a.name">Baixar</a>
-                <button class="danger" type="button" (click)="removeAnexo(a.id)">
-                  Remover
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div *ngIf="!uploads.length && !anexos.length" class="empty">
-            Nenhum anexo ainda. Use a área de upload acima.
-          </div>
-        </div>
-
-        <div class="footer">
-          <button class="btn" type="button" (click)="close()">Cancelar</button>
-          <button class="btnPrimary" type="button" (click)="save()">Salvar relatório</button>
-        </div>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .overlay{
-      position:fixed; inset:0;
-      background:rgba(2,6,23,.55);
-      display:grid; place-items:center;
-      padding:18px; z-index:999;
-    }
-    .modal{
-      width:min(980px, 100%);
-      background:#fff;
-      border-radius:16px;
-      border:1px solid #e7e9ee;
-      box-shadow:0 22px 60px rgba(2,6,23,.35);
-      padding:16px;
-    }
-    .header{
-      display:flex; align-items:flex-start; justify-content:space-between;
-      gap:12px; padding:4px 6px 8px;
-    }
-    h2{margin:0; font-size:20px; color:#0f172a;}
-    .meta{margin-top:6px; color:#64748b; font-size:12px; font-weight:800;}
-    .x{
-      border:1px solid #e7e9ee; background:#fff;
-      border-radius:12px; width:42px; height:42px;
-      cursor:pointer; font-weight:900;
-    }
-
-    .tabs{
-      display:flex; gap:8px;
-      padding:8px 6px 10px;
-      border-bottom:1px solid #eef2f7;
-      margin-bottom:12px;
-    }
-    .tab{
-      border:1px solid #e7e9ee;
-      background:#fff;
-      border-radius:999px;
-      padding:10px 12px;
-      font-weight:900;
-      cursor:pointer;
-      color:#0f172a;
-      display:flex; gap:8px; align-items:center;
-    }
-    .tab.active{
-      border-color:rgba(15,47,87,.55);
-      box-shadow:0 0 0 4px rgba(15,47,87,.10);
-    }
-    .pill{
-      background:#0b1f3a; color:#fff;
-      border-radius:999px; padding:2px 8px;
-      font-size:12px; font-weight:900;
-    }
-
-    .content{padding:0 6px 10px;}
-    .label{display:block; font-weight:900; color:#0f172a; margin-bottom:8px;}
-    .textarea{
-      width:100%;
-      border:1px solid #e7e9ee;
-      border-radius:12px;
-      padding:12px;
-      outline:none;
-      font-weight:700;
-      resize:vertical;
-    }
-    .textarea:focus{
-      border-color:rgba(15,47,87,.45);
-      box-shadow:0 0 0 4px rgba(15,47,87,.08);
-    }
-
-    .dropzone{
-      border:1px dashed rgba(15,47,87,.35);
-      border-radius:14px;
-      padding:14px;
-      background:linear-gradient(180deg, rgba(15,47,87,.04), rgba(2,6,23,.00));
-      display:grid; gap:12px;
-    }
-    .dropzone.dragging{
-      border-color:rgba(212,175,55,.8);
-      box-shadow:0 0 0 4px rgba(212,175,55,.15);
-    }
-    .dzTop{display:flex; gap:12px; align-items:center;}
-    .dzIcon{
-      width:44px; height:44px;
-      border-radius:12px;
-      display:grid; place-items:center;
-      background:rgba(15,47,87,.08);
-      font-weight:900;
-    }
-    .dzText{display:grid; gap:2px;}
-    .dzText strong{color:#0f172a;}
-    .dzText span{color:#64748b; font-weight:700; font-size:12px;}
-
-    .hint{color:#64748b; font-size:12px; font-weight:700;}
-
-    .list{margin-top:14px; display:grid; gap:10px;}
-    .listTitle{font-weight:900; color:#0f172a; font-size:13px;}
-
-    .fileRow{
-      border:1px solid #eef2f7;
-      border-radius:12px;
-      padding:12px;
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      align-items:center;
-    }
-    .fileMain{display:grid; gap:6px; min-width:0;}
-    .fileName{font-weight:900; color:#0f172a; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:600px;}
-    .fileSub{color:#64748b; font-size:12px; font-weight:800;}
-    .ok{color:#16a34a;}
-    .err{color:#9f1239;}
-
-    .bar{
-      height:10px;
-      border-radius:999px;
-      background:#eef2f7;
-      overflow:hidden;
-    }
-    .barFill{
-      height:100%;
-      background:linear-gradient(180deg,#0f2f57,#0b1f3a);
-      width:0%;
-      transition:width .25s ease;
-    }
-
-    .actionsRight{display:flex; gap:12px; align-items:center;}
-    .link{font-weight:900; color:#0b1f3a; text-decoration:none;}
-    .link:hover{text-decoration:underline;}
-
-    .btn{
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid #e7e9ee;
-      background:#fff;
-      cursor:pointer;
-      font-weight:900;
-    }
-    .btnPrimary{
-      padding:10px 12px;
-      border-radius:12px;
-      border:0;
-      cursor:pointer;
-      font-weight:900;
-      color:#fff;
-      background:linear-gradient(180deg,#0f2f57,#0b1f3a);
-    }
-    .danger{
-      padding:8px 10px;
-      border-radius:12px;
-      border:1px solid #fecdd3;
-      background:#fff1f2;
-      color:#9f1239;
-      font-weight:900;
-      cursor:pointer;
-      white-space:nowrap;
-    }
-    .footer{
-      display:flex;
-      justify-content:flex-end;
-      gap:10px;
-      padding:6px;
-      border-top:1px solid #eef2f7;
-      margin-top:10px;
-    }
-    .empty{color:#64748b; font-weight:800; padding:10px 0;}
-
-    @media (max-width: 860px){
-      .fileName{max-width:300px;}
-    }
-  `],
+    DialogModule,
+    ButtonModule,
+    TextareaModule,
+    SelectButtonModule,
+  ],
+  templateUrl: './relatorio-editor.html',
+  styleUrls: ['./relatorio-editor.css'],
 })
 export class RelatorioEditorComponent implements OnInit {
   escalaId = '';
   escala: Escala | null = null;
+  loading = true;
 
-  tab: 'texto' | 'anexos' = 'texto';
+  // dialog
+  visible = true;
+
+  // tabs
+  tab: TabKey = 'texto';
+  tabOptions = [
+    { label: 'Texto', value: 'texto' as TabKey },
+    { label: 'Anexos', value: 'anexos' as TabKey },
+  ];
 
   relatorioTexto = '';
   anexos: Anexo[] = [];
 
   dragging = false;
-
   uploads: UploadItem[] = [];
 
   constructor(
@@ -342,6 +73,7 @@ export class RelatorioEditorComponent implements OnInit {
       this.route.snapshot.queryParamMap.get('escalaId');
 
     if (!id) {
+      this.loading = false;
       this.router.navigateByUrl('/relatorios');
       return;
     }
@@ -350,17 +82,20 @@ export class RelatorioEditorComponent implements OnInit {
     const found = this.escalas.getById(id);
 
     if (!found) {
-      this.router.navigateByUrl('/relatorios');
+      this.loading = false;
+      this.escala = null;
       return;
     }
 
     this.escala = found;
     this.relatorioTexto = found.relatorio ?? '';
     this.anexos = [...(found.anexos ?? [])];
+    this.loading = false;
   }
 
   close() {
-    this.router.navigateByUrl('/relatorios');
+    this.visible = false;
+    setTimeout(() => this.router.navigateByUrl('/relatorios'), 0);
   }
 
   save() {
@@ -379,7 +114,7 @@ export class RelatorioEditorComponent implements OnInit {
     return `Extra • ${e.extraTipo ?? 'OUTRO'}`;
   }
 
-  // ---------- Upload UI ----------
+  // ---------- Drag & Drop / Upload ----------
 
   onDragOver(ev: DragEvent) {
     ev.preventDefault();
@@ -413,7 +148,7 @@ export class RelatorioEditorComponent implements OnInit {
   }
 
   private addFiles(files: FileList) {
-    Array.from(files).forEach(file => this.queueFile(file));
+    Array.from(files).forEach((file) => this.queueFile(file));
   }
 
   private queueFile(file: File) {
@@ -429,11 +164,10 @@ export class RelatorioEditorComponent implements OnInit {
 
     this.uploads = [item, ...this.uploads];
 
-    // animação visual de progresso
     const timer = setInterval(() => {
-      const u = this.uploads.find(x => x.id === id);
-      if (!u) { clearInterval(timer); return; }
-      if (u.progress >= 90) { clearInterval(timer); return; }
+      const u = this.uploads.find((x) => x.id === id);
+      if (!u) return clearInterval(timer);
+      if (u.progress >= 90) return clearInterval(timer);
       u.progress += 6;
     }, 120);
 
@@ -443,9 +177,7 @@ export class RelatorioEditorComponent implements OnInit {
       clearInterval(timer);
 
       const dataUrl = String(reader.result || '');
-
-      // finaliza visual
-      const u = this.uploads.find(x => x.id === id);
+      const u = this.uploads.find((x) => x.id === id);
       if (u) {
         u.progress = 100;
         u.state = 'pronto';
@@ -462,16 +194,16 @@ export class RelatorioEditorComponent implements OnInit {
 
       this.anexos = [anexo, ...this.anexos];
 
-      // remove da fila depois de um tempinho (só visual)
       setTimeout(() => this.removeUpload(id), 600);
     };
 
     reader.onerror = () => {
       clearInterval(timer);
-      const u = this.uploads.find(x => x.id === id);
+      const u = this.uploads.find((x) => x.id === id);
       if (u) {
         u.progress = 100;
         u.state = 'erro';
+        u.error = 'Erro ao ler arquivo';
       }
     };
 
@@ -479,11 +211,18 @@ export class RelatorioEditorComponent implements OnInit {
   }
 
   removeUpload(id: string) {
-    this.uploads = this.uploads.filter(u => u.id !== id);
+    this.uploads = this.uploads.filter((u) => u.id !== id);
   }
 
-  removeAnexo(id: string) {
-    this.anexos = this.anexos.filter(a => a.id !== id);
+  removeAnexoById(id: string) {
+    this.anexos = this.anexos.filter((a) => a.id !== id);
+  }
+
+  downloadAnexo(a: Anexo) {
+    const link = document.createElement('a');
+    link.href = a.dataUrl;
+    link.download = a.name;
+    link.click();
   }
 
   formatBytes(bytes: number): string {
@@ -496,7 +235,6 @@ export class RelatorioEditorComponent implements OnInit {
   }
 
   private newId(): string {
-    return (globalThis.crypto?.randomUUID?.() ??
-      `${Date.now()}-${Math.random().toString(16).slice(2)}`);
+    return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   }
 }
